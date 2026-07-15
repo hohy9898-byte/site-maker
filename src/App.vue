@@ -312,12 +312,10 @@ const filteredAll = computed(() => {
 
   const tabItems =
     selectedTab.value === 'all'
-      ? items
-      : items.filter((p) =>
-          selectedTab.value === 'popular'
-            ? isPopularPost(p) && !isRecyclePost(p)
-            : isRecyclePost(p)
-        )
+      ? items.filter((p) => !isRecyclePost(p))
+      : selectedTab.value === 'popular'
+        ? items.filter((p) => isPopularPost(p) && !isRecyclePost(p))
+        : items.filter((p) => isRecyclePost(p))
 
   const categoryItems =
     selectedCategory.value === 'all'
