@@ -12,6 +12,31 @@
       <button class="icon-search">🔍</button>
     </header>
 
+    <section class="today-popular-section">
+      <div class="today-popular-head">
+        <h2>오늘의 인기글</h2>
+      </div>
+
+      <div class="today-popular-viewport">
+        <Transition name="fade" mode="out-in">
+          <div
+            v-if="currentPopularPost"
+            :key="currentPopularPost.id"
+            class="today-popular-item today-popular-item-clickable"
+            @click="openDetail(currentPopularPost.id)"
+            @keydown.enter.prevent="openDetail(currentPopularPost.id)"
+            tabindex="0"
+            role="button"
+          >
+            <span class="today-popular-title">{{ currentPopularPost.title }}</span>
+          </div>
+          <div v-else :key="'empty'" class="today-popular-item">
+            <span class="today-popular-title empty">오늘 작성된 인기글이 아직 없습니다.</span>
+          </div>
+        </Transition>
+      </div>
+    </section>
+
     <section class="board-header">
       <div class="breadcrumb">홈 &gt; 서울/경기 게시판</div>
 
@@ -231,12 +256,29 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 
 const STORAGE_KEY = 'community-posts'
 const VOTE_STORAGE_KEY = 'community-votes'
-const RAW = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null')
-const voteMap = ref(JSON.parse(localStorage.getItem(VOTE_STORAGE_KEY) || '{}'))
+
+let rawData = null
+try {
+  rawData = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null')
+} catch (e) {
+  console.error('게시글 저장소 파싱 실패:', e)
+  rawData = null
+}
+
+const RAW = rawData
+let voteStorage = {}
+try {
+  voteStorage = JSON.parse(localStorage.getItem(VOTE_STORAGE_KEY) || '{}')
+} catch (e) {
+  console.error('투표 저장소 파싱 실패:', e)
+  voteStorage = {}
+}
+
+const voteMap = ref(voteStorage)
 
 watch(voteMap, (v) => {
   localStorage.setItem(VOTE_STORAGE_KEY, JSON.stringify(v))
@@ -296,10 +338,10 @@ const makeTempPosts = () => {
   const now = new Date()
   return [
     {
-      id: 1001,
-      title: '임시 인기글',
-      content: '추천 수가 10개 이상인 임시 인기글입니다.',
-      password: 'temp-popular',
+      id: 2001,
+      title: '인기글 01',
+      content: '추천 수가 10개인 인기글입니다.',
+      password: 'pw2001',
       category: 'free',
       createdAt: now.toISOString(),
       updatedAt: '',
@@ -308,22 +350,112 @@ const makeTempPosts = () => {
       userVote: null
     },
     {
-      id: 1002,
-      title: '임시 분리수거글',
-      content: '비추천 수가 10개 이상이고 추천보다 5개 이상 많은 임시 분리수거 글입니다.',
-      password: 'temp-recycle',
+      id: 2002,
+      title: '인기글 02',
+      content: '추천 수가 11개인 인기글입니다.',
+      password: 'pw2002',
       category: 'free',
       createdAt: now.toISOString(),
       updatedAt: '',
-      likes: 3,
-      dislikes: 10,
+      likes: 11,
+      dislikes: 0,
+      userVote: null
+    },
+    {
+      id: 2003,
+      title: '인기글 03',
+      content: '추천 수가 12개인 인기글입니다.',
+      password: 'pw2003',
+      category: 'free',
+      createdAt: now.toISOString(),
+      updatedAt: '',
+      likes: 12,
+      dislikes: 0,
+      userVote: null
+    },
+    {
+      id: 2004,
+      title: '인기글 04',
+      content: '추천 수가 13개인 인기글입니다.',
+      password: 'pw2004',
+      category: 'free',
+      createdAt: now.toISOString(),
+      updatedAt: '',
+      likes: 13,
+      dislikes: 0,
+      userVote: null
+    },
+    {
+      id: 2005,
+      title: '인기글 05',
+      content: '추천 수가 14개인 인기글입니다.',
+      password: 'pw2005',
+      category: 'free',
+      createdAt: now.toISOString(),
+      updatedAt: '',
+      likes: 14,
+      dislikes: 0,
+      userVote: null
+    },
+    {
+      id: 2006,
+      title: '인기글 06',
+      content: '추천 수가 15개인 인기글입니다.',
+      password: 'pw2006',
+      category: 'free',
+      createdAt: now.toISOString(),
+      updatedAt: '',
+      likes: 15,
+      dislikes: 0,
+      userVote: null
+    },
+    {
+      id: 2007,
+      title: '인기글 07',
+      content: '추천 수가 16개인 인기글입니다.',
+      password: 'pw2007',
+      category: 'free',
+      createdAt: now.toISOString(),
+      updatedAt: '',
+      likes: 16,
+      dislikes: 0,
+      userVote: null
+    },
+    {
+      id: 2008,
+      title: '인기글 08',
+      content: '추천 수가 17개인 인기글입니다.',
+      password: 'pw2008',
+      category: 'free',
+      createdAt: now.toISOString(),
+      updatedAt: '',
+      likes: 17,
+      dislikes: 0,
+      userVote: null
+    },
+    {
+      id: 2009,
+      title: '인기글 09',
+      content: '추천 수가 18개인 인기글입니다.',
+      password: 'pw2009',
+      category: 'free',
+      createdAt: now.toISOString(),
+      updatedAt: '',
+      likes: 18,
+      dislikes: 0,
       userVote: null
     }
   ]
 }
 
 const existingPosts = Array.isArray(RAW) ? RAW : []
-const initialPosts = existingPosts.length > 0 ? existingPosts : [...makeSample(), ...makeTempPosts()]
+const basePosts = existingPosts.length > 0 ? existingPosts : makeSample()
+const tempPosts = makeTempPosts()
+
+const initialPosts = [
+  ...basePosts,
+  ...tempPosts.filter((temp) => !basePosts.some((p) => p.id === temp.id))
+]
 
 const rawPosts = ref(
   normalizePosts(initialPosts).map((p) => ({
@@ -343,12 +475,69 @@ const selectedTab = ref('all')
 const selectedCategory = ref('all')
 const showCategoryMenu = ref(false)
 
-watch(selectedTab, () => {
-  page.value = 1
+let rotationTimer = null
+const todayPopularIndex = ref(0)
+
+const todayPopularPosts = computed(() => {
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+
+  return rawPosts.value
+    .filter((post) => {
+      const createdAt = post.createdAt ? new Date(post.createdAt) : null
+      if (!createdAt || Number.isNaN(createdAt.getTime())) return false
+
+      const createdDate = new Date(
+        createdAt.getFullYear(),
+        createdAt.getMonth(),
+        createdAt.getDate()
+      )
+
+      return createdDate.getTime() === today.getTime() && isPopularPost(post)
+    })
+    .sort((a, b) => {
+      const likeDiff = Number(b.likes ?? 0) - Number(a.likes ?? 0)
+      if (likeDiff !== 0) return likeDiff
+
+      // 같은 추천수면 먼저 작성된 글 우선
+      return new Date(a.createdAt) - new Date(b.createdAt)
+    })
+    .slice(0, 8)
 })
 
-watch(selectedCategory, () => {
-  page.value = 1
+const currentPopularPost = computed(() => {
+  return todayPopularPosts.value[todayPopularIndex.value] || null
+})
+
+function advanceTodayPopular() {
+  if (todayPopularPosts.value.length <= 1) return
+  todayPopularIndex.value = (todayPopularIndex.value + 1) % todayPopularPosts.value.length
+}
+
+function startTodayPopularRotation() {
+  if (rotationTimer) {
+    window.clearInterval(rotationTimer)
+  }
+
+  if (todayPopularPosts.value.length > 1) {
+    rotationTimer = window.setInterval(advanceTodayPopular, 5000)
+  }
+}
+
+onMounted(() => {
+  startTodayPopularRotation()
+})
+
+onBeforeUnmount(() => {
+  if (rotationTimer) {
+    window.clearInterval(rotationTimer)
+    rotationTimer = null
+  }
+})
+
+watch(todayPopularPosts, () => {
+  todayPopularIndex.value = 0
+  startTodayPopularRotation()
 })
 
 function toggleCategoryMenu() {
@@ -360,12 +549,12 @@ function selectCategory(category) {
   showCategoryMenu.value = false
 }
 
-const isPopularPost = (post) => {
+function isPopularPost(post) {
   const likes = Number(post.likes ?? 0)
   return post.category === 'popular' || likes >= 10
 }
 
-const isRecyclePost = (post) => {
+function isRecyclePost(post) {
   const likes = Number(post.likes ?? 0)
   const dislikes = Number(post.dislikes ?? 0)
   return post.category === 'recycle' || (dislikes >= 10 && dislikes >= likes + 5)
@@ -437,7 +626,9 @@ const voteMessage = ref('')
 const fileInputRef = ref(null)
 
 function triggerImageUpload() {
-  fileInputRef.value?.click()
+  nextTick(() => {
+    fileInputRef.value?.click()
+  })
 }
 
 function handleImageUpload(event) {
@@ -1025,5 +1216,69 @@ button.danger {
   object-fit: cover;
   border: 1px solid #e5e7eb;
   display: block;
+}
+
+.today-popular-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 12px 0 20px;
+  padding: 18px 20px;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: linear-gradient(90deg, #f8fafc 0%, #eef2ff 100%);
+}
+
+.today-popular-section h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #111827;
+}
+
+.today-popular-viewport {
+  flex: 1;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.today-popular-item {
+  width: 100%;
+}
+
+.today-popular-title {
+  font-weight: 600;
+  color: #1d4ed8;
+}
+
+.today-popular-title.empty {
+  color: #6b7280;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: all 0.6s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.fade-enter-to,
+.fade-leave-from {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.today-popular-item-clickable {
+  cursor: pointer;
+}
+
+.today-popular-item-clickable:hover .today-popular-title {
+  text-decoration: underline;
 }
 </style>
