@@ -81,19 +81,32 @@
       <table class="board-table">
         <thead>
           <tr>
-            <th style="width:80px">번호</th>
-            <th style="width:100px">구분</th>
+            <th class="col-num">번호</th>
+            <th class="col-category">구분</th>
             <th>제목</th>
-            <th style="width:120px">작성일</th>
+            <th class="col-date">작성일</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="post in filteredPosts" :key="post.id" @click="openDetail(post.id)" style="cursor:pointer">
+          <tr v-for="post in filteredPosts" :key="post.id" @click="openDetail(post.id)" class="clickable-row">
             <td>{{ post.seq }}</td>
             <td>
               <span class="category-badge">{{ getCategoryLabel(post.category) }}</span>
             </td>
-            <td class="title-cell">{{ post.title }}</td>
+            <td class="title-cell">
+              <div class="title-text">{{ post.title }}</div>
+              <div v-if="post.tags?.length" class="tag-list row-tags">
+                <button
+                  v-for="tag in post.tags"
+                  :key="tag"
+                  type="button"
+                  class="tag-badge clickable-tag"
+                  @click.stop="openTagPosts(tag)"
+                >
+                  #{{ tag }}
+                </button>
+              </div>
+            </td>
             <td>{{ post.displayDate }}</td>
           </tr>
           <tr v-if="filteredPosts.length === 0">
@@ -164,8 +177,13 @@
 
     <div v-if="showDetailModal" class="modal-overlay" @click.self="closeDetailModal">
       <div class="modal-card" role="dialog" aria-modal="true">
+        <div class="modal-header">
+          <h3 v-if="!detailEditMode">{{ detailPost?.title }}</h3>
+          <h3 v-else>게시글 수정</h3>
+          <button class="secondary modal-close-btn" @click="closeDetailModal">✕</button>
+        </div>
+
         <template v-if="!detailEditMode">
-          <h3>{{ detailPost?.title }}</h3>
           <div class="meta">
             <span>작성일 {{ detailPost?.displayDate }}</span>
             <span v-if="detailPost?.updatedAt">수정일 {{ detailPost?.displayUpdatedAt }}</span>
@@ -194,7 +212,15 @@
             </button>
 
             <div v-if="detailPost?.tags?.length" class="tag-list">
-              <span v-for="tag in detailPost.tags" :key="tag" class="tag-badge">#{{ tag }}</span>
+              <button
+                v-for="tag in detailPost.tags"
+                :key="tag"
+                type="button"
+                class="tag-badge clickable-tag"
+                @click="openTagPosts(tag)"
+              >
+                #{{ tag }}
+              </button>
             </div>
 
             <span class="vote-note" v-if="detailPost?.userVote">투표 완료</span>
@@ -216,12 +242,17 @@
 
         <template v-else>
           <h3>게시글 수정</h3>
+
           <label>제목
             <input v-model="form.title" type="text" />
           </label>
 
           <label>내용
             <textarea v-model="form.content" rows="8"></textarea>
+          </label>
+
+          <label>태그
+            <input v-model="form.tagsText" type="text" placeholder="예: 축제, 맛집, 숙박" />
           </label>
 
           <div class="image-actions">
@@ -260,6 +291,29 @@
         </template>
       </div>
     </div>
+
+    <div v-if="showTagPostsModal" class="modal-overlay" @click.self="closeTagPostsModal">
+      <div class="modal-card" role="dialog" aria-modal="true">
+        <div class="tag-posts-header">
+          <h3>#{{ selectedTag }} 게시글</h3>
+          <button class="secondary" @click="closeTagPostsModal">닫기</button>
+        </div>
+
+        <ul v-if="tagPosts.length" class="tag-post-list">
+          <li
+            v-for="post in tagPosts"
+            :key="post.id"
+            class="tag-post-item"
+            @click="openDetail(post.id); closeTagPostsModal()"
+          >
+            <div class="tag-post-title">{{ post.title }}</div>
+            <div class="tag-post-meta">{{ getCategoryLabel(post.category) }} · {{ post.displayDate }}</div>
+          </li>
+        </ul>
+
+        <p v-else class="empty">해당 태그가 포함된 게시글이 없습니다.</p>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -277,7 +331,10 @@ try {
   rawData = null
 }
 
-const RAW = rawData
+localStorage.removeItem(STORAGE_KEY)
+localStorage.removeItem(VOTE_STORAGE_KEY)
+const RAW = []
+
 let voteStorage = {}
 try {
   voteStorage = JSON.parse(localStorage.getItem(VOTE_STORAGE_KEY) || '{}')
@@ -472,14 +529,11 @@ const makeTempPosts = () => {
   ]
 }
 
-const existingPosts = Array.isArray(RAW) ? RAW : []
-const basePosts = existingPosts.length > 0 ? existingPosts : makeSample()
-const tempPosts = makeTempPosts()
+const TEMP_POST_IDS = new Set([1001, 1002, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009])
 
-const initialPosts = [
-  ...basePosts,
-  ...tempPosts.filter((temp) => !basePosts.some((p) => p.id === temp.id))
-]
+const existingPosts = Array.isArray(RAW) ? RAW : []
+const initialPosts = []
+const tempPosts = makeTempPosts()
 
 const rawPosts = ref(
   normalizePosts(initialPosts).map((p) => ({
@@ -522,8 +576,6 @@ const todayPopularPosts = computed(() => {
     .sort((a, b) => {
       const likeDiff = Number(b.likes ?? 0) - Number(a.likes ?? 0)
       if (likeDiff !== 0) return likeDiff
-
-      // 같은 추천수면 먼저 작성된 글 우선
       return new Date(a.createdAt) - new Date(b.createdAt)
     })
     .slice(0, 8)
@@ -649,6 +701,32 @@ const verifyPassword = ref('')
 const detailMessage = ref('')
 const voteMessage = ref('')
 const fileInputRef = ref(null)
+
+const showTagPostsModal = ref(false)
+const selectedTag = ref('')
+
+const tagPosts = computed(() => {
+  if (!selectedTag.value) return []
+
+  return rawPosts.value
+    .filter((post) => (post.tags || []).includes(selectedTag.value))
+    .slice()
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .map((post) => ({
+      ...post,
+      displayDate: formatDisplay(post.createdAt)
+    }))
+})
+
+function openTagPosts(tag) {
+  selectedTag.value = tag
+  showTagPostsModal.value = true
+}
+
+function closeTagPostsModal() {
+  showTagPostsModal.value = false
+  selectedTag.value = ''
+}
 
 function triggerImageUpload() {
   nextTick(() => {
@@ -1040,44 +1118,92 @@ const detailPost = computed(() => {
 }
 
 .title-cell {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow: visible;
   max-width: 720px;
 }
 
-.empty {
-  text-align: center;
-  color: #666;
-  padding: 24px 0;
+.title-text {
+  font-weight: 600;
 }
 
-.pagination {
+.tag-list {
   display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 18px;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 6px;
 }
 
-.pagination button {
-  width: 38px;
-  height: 38px;
-  border: 1px solid #d1d5db;
-  border-radius: 10px;
-  background: white;
+.tag-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #2563eb;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid #93c5fd;
+  line-height: 1.2;
+}
+
+.tag-badge.clickable-tag {
   cursor: pointer;
 }
 
-.pagination button.active {
-  background: #3b82f6;
-  color: white;
-  border-color: #3b82f6;
+.tag-badge.clickable-tag:hover {
+  background: #dbeafe;
+  border-color: #60a5fa;
+}
+
+.row-tags {
+  margin-top: 6px;
+}
+
+.tag-posts-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.tag-post-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tag-post-item {
+  padding: 12px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.tag-post-item:hover {
+  background: #f8fafc;
+}
+
+.tag-post-title {
+  font-weight: 600;
+  color: #111827;
+}
+
+.tag-post-meta {
+  margin-top: 4px;
+  font-size: 0.9rem;
+  color: #6b7280;
 }
 
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.35);
+  background: rgba(0, 0, 0, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1086,123 +1212,53 @@ const detailPost = computed(() => {
 }
 
 .modal-card {
-  width: 720px;
-  max-width: 100%;
+  width: min(760px, 100%);
+  max-height: calc(100vh - 48px);
+  overflow: auto;
   background: white;
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 20px;
-  box-shadow: 0 12px 40px rgba(0,0,0,0.15);
-}
-
-.modal-card h3 {
-  margin: 0 0 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+  box-sizing: border-box;
 }
 
 .modal-card label {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   margin-bottom: 12px;
   font-weight: 600;
+  color: #374151;
 }
 
 .modal-card input,
 .modal-card textarea,
 .modal-card select {
   width: 100%;
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
-  margin-top: 8px;
   box-sizing: border-box;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font: inherit;
+  background: #fff;
 }
 
-.meta {
-  display: flex;
-  gap: 12px;
-  color: #6b7280;
-  margin-bottom: 12px;
-  font-size: 0.95rem;
+.modal-card textarea {
+  min-height: 120px;
+  resize: vertical;
 }
 
-.content-text {
-  white-space: pre-wrap;
-  line-height: 1.6;
-  margin-bottom: 18px;
+.modal-card input:focus,
+.modal-card textarea:focus,
+.modal-card select:focus {
+  outline: none;
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
 }
 
-.vote-row {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
-}
-
-.vote {
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  color: white;
-}
-
-.vote.like {
-  background: #10b981;
-}
-
-.vote.dislike {
-  background: #ef4444;
-}
-
-.vote:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.vote-note {
-  color: #6b7280;
-  font-size: 0.9rem;
-}
-
-.modal-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 12px;
-  justify-content: flex-end;
-}
-
-.modal-actions button {
-  padding: 8px 14px;
-  border-radius: 8px;
-  border: none;
-  background: #2563eb;
-  color: white;
-  cursor: pointer;
-}
-
-.modal-actions button.secondary {
-  background: #f3f4f6;
-  color: #111827;
-  border: 1px solid #e5e7eb;
-}
-
-.modal-actions button.danger,
-button.danger {
-  background: #ef4444;
-}
-
-.msg {
-  color: #b91c1c;
+.modal-card .msg {
   margin-top: 8px;
-}
-
-.category-badge {
-  display: inline-block;
-  padding: 4px 8px;
-  border-radius: 999px;
-  background: #e0f2fe;
-  color: #0369a1;
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: 0.95rem;
 }
 
 .image-actions {
@@ -1260,7 +1316,7 @@ button.danger {
   background: linear-gradient(90deg, #f8fafc 0%, #eef2ff 100%);
 }
 
-.today-popular-section h2 {
+.today-popular-head h2 {
   margin: 0;
   font-size: 1.1rem;
   color: #111827;
@@ -1276,6 +1332,14 @@ button.danger {
 
 .today-popular-item {
   width: 100%;
+}
+
+.today-popular-item-clickable {
+  cursor: pointer;
+}
+
+.today-popular-item-clickable:hover .today-popular-title {
+  text-decoration: underline;
 }
 
 .today-popular-title {
@@ -1304,11 +1368,113 @@ button.danger {
   transform: translateY(0);
 }
 
-.today-popular-item-clickable {
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.pagination button {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: white;
+  padding: 8px 12px;
   cursor: pointer;
 }
 
-.today-popular-item-clickable:hover .today-popular-title {
-  text-decoration: underline;
+.pagination button.active {
+  background: #2563eb;
+  color: white;
+  border-color: #2563eb;
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.category-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #f3f4f6;
+  color: #374151;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.empty {
+  text-align: center;
+  color: #6b7280;
+  padding: 24px 0;
+}
+
+.vote-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.vote {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  color: white;
+  font-weight: 600;
+}
+
+.vote.like {
+  background: #10b981;
+}
+
+.vote.dislike {
+  background: #ef4444;
+}
+
+.vote:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.vote-note {
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  justify-content: flex-end;
+}
+
+.modal-actions button {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #2563eb;
+  background: #2563eb;
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.modal-actions button:hover {
+  filter: brightness(0.96);
+}
+
+.modal-actions button.secondary {
+  background: #f3f4f6;
+  color: #111827;
+  border: 1px solid #e5e7eb;
+}
+
+.modal-actions button.danger,
+button.danger {
+  background: #ef4444;
+  border-color: #ef4444;
 }
 </style>
