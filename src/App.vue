@@ -96,6 +96,21 @@
           <textarea v-model="form.content" rows="8"></textarea>
         </label>
 
+        <div class="image-actions">
+          <button type="button" class="image-upload-button" @click="triggerImageUpload">사진</button>
+          <span v-if="form.imageName" class="image-name">{{ form.imageName }}</span>
+        </div>
+
+        <input
+          ref="fileInputRef"
+          type="file"
+          accept="image/*"
+          class="hidden-file-input"
+          @change="handleImageUpload"
+        />
+
+        <img v-if="form.image" :src="form.image" class="image-preview" alt="첨부 이미지 미리보기" />
+
         <label>카테고리
           <select v-model="form.category">
             <option value="festival">축제</option>
@@ -127,6 +142,8 @@
             <span v-if="detailPost?.updatedAt">수정일 {{ detailPost?.displayUpdatedAt }}</span>
           </div>
           <p class="content-text">{{ detailPost?.content }}</p>
+
+          <img v-if="detailPost?.image" :src="detailPost.image" class="detail-image" alt="첨부 이미지" />
 
           <div class="vote-row">
             <button
@@ -173,6 +190,21 @@
           <label>내용
             <textarea v-model="form.content" rows="8"></textarea>
           </label>
+
+          <div class="image-actions">
+            <button type="button" class="image-upload-button" @click="triggerImageUpload">사진</button>
+            <span v-if="form.imageName" class="image-name">{{ form.imageName }}</span>
+          </div>
+
+          <input
+            ref="fileInputRef"
+            type="file"
+            accept="image/*"
+            class="hidden-file-input"
+            @change="handleImageUpload"
+          />
+
+          <img v-if="form.image" :src="form.image" class="image-preview" alt="첨부 이미지 미리보기" />
 
           <label>카테고리
             <select v-model="form.category">
@@ -235,8 +267,17 @@ const normalizePosts = (posts) =>
     likes: p.likes ?? 0,
     dislikes: p.dislikes ?? 0,
     userVote: p.userVote ?? null,
-    category: ['festival', 'accommodation', 'find', 'free'].includes(p.category) ? p.category : 'free'
+    category: ['festival', 'accommodation', 'find', 'free'].includes(p.category) ? p.category : 'free',
+    image: p.image || '',
+    imageName: p.imageName || ''
   }))
+
+const readImageAsDataUrl = (file) => new Promise((resolve, reject) => {
+  const reader = new FileReader()
+  reader.onload = () => resolve(reader.result)
+  reader.onerror = () => reject(reader.error)
+  reader.readAsDataURL(file)
+})
 
 const makeSample = () => {
   const now = new Date()
@@ -251,8 +292,41 @@ const makeSample = () => {
   ]
 }
 
+const makeTempPosts = () => {
+  const now = new Date()
+  return [
+    {
+      id: 1001,
+      title: '임시 인기글',
+      content: '추천 수가 10개 이상인 임시 인기글입니다.',
+      password: 'temp-popular',
+      category: 'free',
+      createdAt: now.toISOString(),
+      updatedAt: '',
+      likes: 10,
+      dislikes: 0,
+      userVote: null
+    },
+    {
+      id: 1002,
+      title: '임시 분리수거글',
+      content: '비추천 수가 10개 이상이고 추천보다 5개 이상 많은 임시 분리수거 글입니다.',
+      password: 'temp-recycle',
+      category: 'free',
+      createdAt: now.toISOString(),
+      updatedAt: '',
+      likes: 3,
+      dislikes: 10,
+      userVote: null
+    }
+  ]
+}
+
+const existingPosts = Array.isArray(RAW) ? RAW : []
+const initialPosts = existingPosts.length > 0 ? existingPosts : [...makeSample(), ...makeTempPosts()]
+
 const rawPosts = ref(
-  normalizePosts(RAW || makeSample()).map((p) => ({
+  normalizePosts(initialPosts).map((p) => ({
     ...p,
     userVote: voteMap.value[p.id] || p.userVote || null
   }))
@@ -288,7 +362,6 @@ function selectCategory(category) {
 
 const isPopularPost = (post) => {
   const likes = Number(post.likes ?? 0)
-  const dislikes = Number(post.dislikes ?? 0)
   return post.category === 'popular' || likes >= 10
 }
 
@@ -300,6 +373,7 @@ const isRecyclePost = (post) => {
 
 const filteredAll = computed(() => {
   const q = query.value.trim().toLowerCase()
+
   const items = rawPosts.value
     .slice()
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
@@ -310,12 +384,15 @@ const filteredAll = computed(() => {
       displayUpdatedAt: p.updatedAt ? formatDisplay(p.updatedAt) : ''
     }))
 
-  const tabItems =
-    selectedTab.value === 'all'
-      ? items.filter((p) => !isRecyclePost(p))
-      : selectedTab.value === 'popular'
-        ? items.filter((p) => isPopularPost(p) && !isRecyclePost(p))
-        : items.filter((p) => isRecyclePost(p))
+  let tabItems = items
+
+  if (selectedTab.value === 'popular') {
+    tabItems = items.filter((p) => isPopularPost(p) && !isRecyclePost(p))
+  } else if (selectedTab.value === 'recycle') {
+    tabItems = items.filter((p) => isRecyclePost(p))
+  } else {
+    tabItems = items.filter((p) => !isRecyclePost(p))
+  }
 
   const categoryItems =
     selectedCategory.value === 'all'
@@ -327,6 +404,7 @@ const filteredAll = computed(() => {
 })
 
 const totalPages = computed(() => Math.max(1, Math.ceil(filteredAll.value.length / perPage)))
+
 const filteredPosts = computed(() => {
   page.value = Math.min(page.value, totalPages.value)
   const start = (page.value - 1) * perPage
@@ -339,7 +417,15 @@ function applySearch() {
 
 const showFormModal = ref(false)
 const formMode = ref('create')
-const form = ref({ id: null, title: '', content: '', password: '', category: 'free' })
+const form = ref({
+  id: null,
+  title: '',
+  content: '',
+  password: '',
+  category: 'free',
+  image: '',
+  imageName: ''
+})
 const formMessage = ref('')
 
 const showDetailModal = ref(false)
@@ -348,21 +434,35 @@ const detailEditMode = ref(false)
 const verifyPassword = ref('')
 const detailMessage = ref('')
 const voteMessage = ref('')
+const fileInputRef = ref(null)
 
-const detailPost = computed(() => {
-  const post = rawPosts.value.find((p) => p.id === detailPostId.value)
-  if (!post) return null
-  return {
-    ...post,
-    userVote: voteMap.value[post.id] || post.userVote || null,
-    displayDate: formatDisplay(post.createdAt),
-    displayUpdatedAt: post.updatedAt ? formatDisplay(post.updatedAt) : ''
-  }
-})
+function triggerImageUpload() {
+  fileInputRef.value?.click()
+}
+
+function handleImageUpload(event) {
+  const file = event.target.files?.[0]
+  if (!file) return
+
+  readImageAsDataUrl(file).then((dataUrl) => {
+    form.value.image = dataUrl
+    form.value.imageName = file.name
+  })
+
+  event.target.value = ''
+}
 
 function openCreateModal() {
   formMode.value = 'create'
-  form.value = { id: null, title: '', content: '', password: '', category: 'free' }
+  form.value = {
+    id: null,
+    title: '',
+    content: '',
+    password: '',
+    category: 'free',
+    image: '',
+    imageName: ''
+  }
   formMessage.value = ''
   showFormModal.value = true
 }
@@ -386,6 +486,8 @@ function submitForm() {
       content: form.value.content.trim(),
       password: form.value.password,
       category: form.value.category || 'free',
+      image: form.value.image || '',
+      imageName: form.value.imageName || '',
       createdAt: now.toISOString(),
       updatedAt: '',
       likes: 0,
@@ -415,6 +517,8 @@ function submitForm() {
     content: form.value.content.trim(),
     password: form.value.password,
     category: form.value.category || 'free',
+    image: form.value.image || rawPosts.value[idx].image || '',
+    imageName: form.value.imageName || rawPosts.value[idx].imageName || '',
     updatedAt: new Date().toISOString()
   }
 
@@ -459,7 +563,9 @@ function attemptStartEdit() {
     title: p.title,
     content: p.content,
     password: p.password,
-    category: p.category || 'free'
+    category: p.category || 'free',
+    image: p.image || '',
+    imageName: p.imageName || ''
   }
   formMessage.value = ''
   detailEditMode.value = true
@@ -511,7 +617,14 @@ function votePost(type) {
 
   rawPosts.value[idx] = { ...current }
   voteMap.value[p.id] = type
-  voteMessage.value = type === 'like' ? '추천이 등록되었습니다.' : '비추천이 등록되었습니다.'
+
+  if (current.likes >= 10) {
+    voteMessage.value = '추천 10회가 되어 인기글 탭에 표시됩니다.'
+  } else if (current.dislikes >= 10 && current.dislikes >= current.likes + 5) {
+    voteMessage.value = '비추천 10회·추천보다 5개 이상 많아 분리수거글 탭에 표시됩니다.'
+  } else {
+    voteMessage.value = type === 'like' ? '추천이 등록되었습니다.' : '비추천이 등록되었습니다.'
+  }
 }
 
 function prevPage() {
@@ -521,6 +634,17 @@ function prevPage() {
 function nextPage() {
   if (page.value < totalPages.value) page.value++
 }
+
+const detailPost = computed(() => {
+  const post = rawPosts.value.find((p) => p.id === detailPostId.value)
+  if (!post) return null
+  return {
+    ...post,
+    userVote: voteMap.value[post.id] || post.userVote || null,
+    displayDate: formatDisplay(post.createdAt),
+    displayUpdatedAt: post.updatedAt ? formatDisplay(post.updatedAt) : ''
+  }
+})
 </script>
 
 <style>
@@ -582,8 +706,7 @@ function nextPage() {
   flex-direction: column;
   gap: 10px;
   width: auto;
-  max-width: 380px;
-  margin-left: auto;
+  max-width: 340px;
 }
 
 .search-toolbar {
@@ -599,7 +722,6 @@ function nextPage() {
   gap: 8px;
   width: 100%;
   max-width: 340px;
-  margin-left: 0;
 }
 
 .search-box input {
@@ -860,5 +982,48 @@ button.danger {
   color: #0369a1;
   font-size: 0.85rem;
   font-weight: 600;
+}
+
+.image-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 12px;
+}
+
+.image-upload-button {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+}
+
+.hidden-file-input {
+  display: none;
+}
+
+.image-name {
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.image-preview {
+  max-width: 100%;
+  max-height: 220px;
+  margin-top: 8px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid #e5e7eb;
+}
+
+.detail-image {
+  max-width: 100%;
+  max-height: 320px;
+  margin-bottom: 16px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1px solid #e5e7eb;
+  display: block;
 }
 </style>
