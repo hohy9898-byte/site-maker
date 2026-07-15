@@ -508,11 +508,6 @@
   cursor: not-allowed;
 }
 
-.vote-note {
-  color: #6b7280;
-  font-size: 0.9rem;
-}
-
 .modal-actions {
   display: flex;
   gap: 10px;
@@ -544,4 +539,35 @@
 button.danger {
   background: #ef4444;
   border-color: #ef4444;
+}
+
+.action-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.icon-btn {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 999px;
+  background: white;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.icon-btn.active {
+  background: #2563eb;
+  color: white;
+  border-color: #2563eb;
+}
+
+.meta-pill {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #f3f4f6;
+  color: #374151;
+  font-size: 0.9rem;
 }

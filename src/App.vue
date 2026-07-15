@@ -222,11 +222,26 @@
                 #{{ tag }}
               </button>
             </div>
+          </div>
 
-            <span class="vote-note" v-if="detailPost?.userVote">투표 완료</span>
+          <div class="action-row">
+            <button class="icon-btn" :class="{ active: detailPost?.likedByMe }" @click="toggleLike(detailPost?.id)">
+              ♥ {{ detailPost?.likeCount ?? 0 }}
+            </button>
+
+            <button class="icon-btn" :class="{ active: detailPost?.bookmarked }" @click="toggleBookmark(detailPost?.id)">
+              🔖 북마크
+            </button>
+
+            <button class="icon-btn" @click="attemptShare">
+              🔗 공유
+            </button>
+
+            <span class="meta-pill">👁 {{ detailPost?.views ?? 0 }}</span>
           </div>
 
           <p class="msg" v-if="voteMessage">{{ voteMessage }}</p>
+          <p class="msg" v-if="shareMessage">{{ shareMessage }}</p>
 
           <label>비밀번호 확인
             <input v-model="verifyPassword" type="password" placeholder="수정·삭제 비밀번호" />
@@ -331,9 +346,7 @@ try {
   rawData = null
 }
 
-localStorage.removeItem(STORAGE_KEY)
-localStorage.removeItem(VOTE_STORAGE_KEY)
-const RAW = []
+const RAW = Array.isArray(rawData) ? rawData : []
 
 let voteStorage = {}
 try {
@@ -389,6 +402,10 @@ const normalizePosts = (posts) =>
     likes: p.likes ?? 0,
     dislikes: p.dislikes ?? 0,
     userVote: p.userVote ?? null,
+    views: p.views ?? 0,
+    bookmarked: Boolean(p.bookmarked),
+    likedByMe: Boolean(p.likedByMe),
+    likeCount: p.likeCount ?? 0,
     category: ['festival', 'accommodation', 'find', 'free'].includes(p.category) ? p.category : 'free',
     image: p.image || '',
     imageName: p.imageName || '',
@@ -402,141 +419,8 @@ const readImageAsDataUrl = (file) => new Promise((resolve, reject) => {
   reader.readAsDataURL(file)
 })
 
-const makeSample = () => {
-  const now = new Date()
-  return [
-    { id: 7, title: '축제 일정 소식', content: '축제 관련 내용', password: 'pw7', createdAt: new Date(now.getTime() - 6 * 86400000).toISOString(), updatedAt: '', likes: 3, dislikes: 0, userVote: null, category: 'festival' },
-    { id: 6, title: '숙박 추천 정보', content: '숙박 관련 내용', password: 'pw6', createdAt: new Date(now.getTime() - 5 * 86400000).toISOString(), updatedAt: '', likes: 0, dislikes: 0, userVote: null, category: 'accommodation' },
-    { id: 5, title: '분실물 찾기', content: '찾기 관련 내용', password: 'pw5', createdAt: new Date(now.getTime() - 4 * 86400000).toISOString(), updatedAt: '', likes: 1, dislikes: 0, userVote: null, category: 'find' },
-    { id: 4, title: '자유롭게 이야기해요', content: '자유 게시글 내용', password: 'pw4', createdAt: new Date(now.getTime() - 3 * 86400000).toISOString(), updatedAt: '', likes: 0, dislikes: 0, userVote: null, category: 'free' },
-    { id: 3, title: '축제 후기', content: '축제 후기 내용', password: 'pw3', createdAt: new Date(now.getTime() - 2 * 86400000).toISOString(), updatedAt: '', likes: 2, dislikes: 0, userVote: null, category: 'festival' },
-    { id: 2, title: '숙소 정보 공유', content: '숙소 관련 내용', password: 'pw2', createdAt: new Date(now.getTime() - 1 * 86400000).toISOString(), updatedAt: '', likes: 0, dislikes: 0, userVote: null, category: 'accommodation' },
-    { id: 1, title: '자유글', content: '자유글 내용', password: 'pw1', createdAt: now.toISOString(), updatedAt: '', likes: 0, dislikes: 0, userVote: null, category: 'free' }
-  ]
-}
-
-const makeTempPosts = () => {
-  const now = new Date()
-  return [
-    {
-      id: 2001,
-      title: '인기글 01',
-      content: '추천 수가 10개인 인기글입니다.',
-      password: 'pw2001',
-      category: 'free',
-      createdAt: now.toISOString(),
-      updatedAt: '',
-      likes: 10,
-      dislikes: 0,
-      userVote: null
-    },
-    {
-      id: 2002,
-      title: '인기글 02',
-      content: '추천 수가 11개인 인기글입니다.',
-      password: 'pw2002',
-      category: 'free',
-      createdAt: now.toISOString(),
-      updatedAt: '',
-      likes: 11,
-      dislikes: 0,
-      userVote: null
-    },
-    {
-      id: 2003,
-      title: '인기글 03',
-      content: '추천 수가 12개인 인기글입니다.',
-      password: 'pw2003',
-      category: 'free',
-      createdAt: now.toISOString(),
-      updatedAt: '',
-      likes: 12,
-      dislikes: 0,
-      userVote: null
-    },
-    {
-      id: 2004,
-      title: '인기글 04',
-      content: '추천 수가 13개인 인기글입니다.',
-      password: 'pw2004',
-      category: 'free',
-      createdAt: now.toISOString(),
-      updatedAt: '',
-      likes: 13,
-      dislikes: 0,
-      userVote: null
-    },
-    {
-      id: 2005,
-      title: '인기글 05',
-      content: '추천 수가 14개인 인기글입니다.',
-      password: 'pw2005',
-      category: 'free',
-      createdAt: now.toISOString(),
-      updatedAt: '',
-      likes: 14,
-      dislikes: 0,
-      userVote: null
-    },
-    {
-      id: 2006,
-      title: '인기글 06',
-      content: '추천 수가 15개인 인기글입니다.',
-      password: 'pw2006',
-      category: 'free',
-      createdAt: now.toISOString(),
-      updatedAt: '',
-      likes: 15,
-      dislikes: 0,
-      userVote: null
-    },
-    {
-      id: 2007,
-      title: '인기글 07',
-      content: '추천 수가 16개인 인기글입니다.',
-      password: 'pw2007',
-      category: 'free',
-      createdAt: now.toISOString(),
-      updatedAt: '',
-      likes: 16,
-      dislikes: 0,
-      userVote: null
-    },
-    {
-      id: 2008,
-      title: '인기글 08',
-      content: '추천 수가 17개인 인기글입니다.',
-      password: 'pw2008',
-      category: 'free',
-      createdAt: now.toISOString(),
-      updatedAt: '',
-      likes: 17,
-      dislikes: 0,
-      userVote: null
-    },
-    {
-      id: 2009,
-      title: '인기글 09',
-      content: '추천 수가 18개인 인기글입니다.',
-      password: 'pw2009',
-      category: 'free',
-      createdAt: now.toISOString(),
-      updatedAt: '',
-      likes: 18,
-      dislikes: 0,
-      userVote: null
-    }
-  ]
-}
-
-const TEMP_POST_IDS = new Set([1001, 1002, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009])
-
-const existingPosts = Array.isArray(RAW) ? RAW : []
-const initialPosts = []
-const tempPosts = makeTempPosts()
-
 const rawPosts = ref(
-  normalizePosts(initialPosts).map((p) => ({
+  normalizePosts(RAW).map((p) => ({
     ...p,
     userVote: voteMap.value[p.id] || p.userVote || null
   }))
@@ -602,6 +486,14 @@ function startTodayPopularRotation() {
 
 onMounted(() => {
   startTodayPopularRotation()
+
+  const match = window.location.hash.match(/^#\/post\/(\d+)/)
+  if (match) {
+    const sharedId = Number(match[1])
+    if (rawPosts.value.some((post) => post.id === sharedId)) {
+      openDetail(sharedId)
+    }
+  }
 })
 
 onBeforeUnmount(() => {
@@ -700,6 +592,7 @@ const detailEditMode = ref(false)
 const verifyPassword = ref('')
 const detailMessage = ref('')
 const voteMessage = ref('')
+const shareMessage = ref('')
 const fileInputRef = ref(null)
 
 const showTagPostsModal = ref(false)
@@ -826,20 +719,56 @@ function submitForm() {
 }
 
 function openDetail(id) {
+  const idx = rawPosts.value.findIndex((post) => post.id === id)
+  if (idx !== -1) {
+    rawPosts.value[idx] = {
+      ...rawPosts.value[idx],
+      views: (rawPosts.value[idx].views ?? 0) + 1
+    }
+  }
+
   detailPostId.value = id
   verifyPassword.value = ''
   detailMessage.value = ''
   voteMessage.value = ''
+  shareMessage.value = ''
   detailEditMode.value = false
   showDetailModal.value = true
+}
+
+function toggleBookmark(postId = detailPost.value?.id) {
+  const idx = rawPosts.value.findIndex((post) => post.id === postId)
+  if (idx === -1) return
+
+  const current = rawPosts.value[idx]
+  rawPosts.value[idx] = {
+    ...current,
+    bookmarked: !current.bookmarked
+  }
+}
+
+function toggleLike(postId = detailPost.value?.id) {
+  const idx = rawPosts.value.findIndex((post) => post.id === postId)
+  if (idx === -1) return
+
+  const current = rawPosts.value[idx]
+  const nextLiked = !current.likedByMe
+
+  rawPosts.value[idx] = {
+    ...current,
+    likedByMe: nextLiked,
+    likeCount: Math.max(0, (current.likeCount ?? 0) + (nextLiked ? 1 : -1))
+  }
 }
 
 function closeDetailModal() {
   showDetailModal.value = false
   detailMessage.value = ''
   voteMessage.value = ''
+  shareMessage.value = ''
   verifyPassword.value = ''
   detailEditMode.value = false
+  resetOgTags()
 }
 
 function attemptStartEdit() {
@@ -925,6 +854,71 @@ function votePost(type) {
   }
 }
 
+const DEFAULT_TITLE = document.title
+const DEFAULT_OG = {
+  title: 'LocalHub',
+  description: '지역 커뮤니티 게시판 LocalHub',
+  url: `${window.location.origin}${window.location.pathname}`
+}
+
+function setMetaTag(property, content) {
+  let tag = document.querySelector(`meta[property="${property}"]`)
+  if (!tag) {
+    tag = document.createElement('meta')
+    tag.setAttribute('property', property)
+    document.head.appendChild(tag)
+  }
+  tag.setAttribute('content', content)
+}
+
+function buildShareUrl(id) {
+  return `${window.location.origin}${window.location.pathname}#/post/${id}`
+}
+
+function updateOgTags(post, url) {
+  document.title = post.title
+  setMetaTag('og:title', post.title)
+  setMetaTag('og:description', (post.content || '').slice(0, 100))
+  setMetaTag('og:url', url)
+  if (post.image) {
+    setMetaTag('og:image', post.image)
+  }
+}
+
+function resetOgTags() {
+  document.title = DEFAULT_TITLE
+  setMetaTag('og:title', DEFAULT_OG.title)
+  setMetaTag('og:description', DEFAULT_OG.description)
+  setMetaTag('og:url', DEFAULT_OG.url)
+}
+
+function copyShareLink(post) {
+  const url = buildShareUrl(post.id)
+  updateOgTags(post, url)
+  navigator.clipboard.writeText(url)
+    .then(() => { shareMessage.value = '게시글 링크가 복사되었습니다.' })
+    .catch(() => { shareMessage.value = `링크 복사에 실패했습니다: ${url}` })
+}
+
+function attemptShare() {
+  const p = detailPost.value
+  if (!p) return
+
+  if (isPopularPost(p)) {
+    copyShareLink(p)
+    return
+  }
+  if (!verifyPassword.value.trim()) {
+    shareMessage.value = '내가 쓴 글만 공유할 수 있습니다. 작성 시 등록한 비밀번호를 입력해주세요.'
+    return
+  }
+  if (p.password !== verifyPassword.value) {
+    shareMessage.value = '비밀번호가 일치하지 않아 공유할 수 없습니다.'
+    return
+  }
+  copyShareLink(p)
+}
+
 function prevPage() {
   if (page.value > 1) page.value--
 }
@@ -944,537 +938,3 @@ const detailPost = computed(() => {
   }
 })
 </script>
-
-<style>
-.page-layout {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 24px;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-  color: #222;
-}
-
-.topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 16px 0;
-}
-
-.region-nav {
-  display: flex;
-  gap: 10px;
-}
-
-.region-nav button,
-.icon-search,
-.new-post,
-.search-box button,
-.tab-group button,
-.category-toggle {
-  border: 1px solid #d1d5db;
-  border-radius: 999px;
-  background: white;
-  padding: 10px 16px;
-  cursor: pointer;
-}
-
-.board-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  margin: 20px 0;
-  flex-wrap: wrap;
-}
-
-.board-actions {
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-end;
-  gap: 8px;
-  flex: 1;
-  width: 100%;
-  margin-left: auto;
-}
-
-.search-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  width: auto;
-  max-width: 340px;
-}
-
-.search-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  width: 100%;
-}
-
-.search-box {
-  display: flex;
-  gap: 8px;
-  width: 100%;
-  max-width: 340px;
-}
-
-.search-box input {
-  flex: 1 1 auto;
-  min-width: 0;
-  padding: 10px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 10px;
-}
-
-.write-actions {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.tab-group {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.category-menu {
-  position: relative;
-}
-
-.category-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.category-toggle-label {
-  color: #2563eb;
-  font-weight: 600;
-}
-
-.category-buttons {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  background: white;
-  border: 1px solid #d1d5db;
-  border-radius: 12px;
-  padding: 8px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-  z-index: 1000;
-  min-width: 96px;
-}
-
-.category-buttons button {
-  border: 1px solid #d1d5db;
-  border-radius: 999px;
-  background: white;
-  padding: 8px 12px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.category-buttons button.active {
-  background: #2563eb;
-  color: white;
-  border-color: #2563eb;
-}
-
-.board-table-wrap {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  overflow: hidden;
-}
-
-.board-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.board-table th,
-.board-table td {
-  padding: 18px 16px;
-  border-bottom: 1px solid #f3f4f6;
-  text-align: left;
-}
-
-.board-table th {
-  background: #f9fafb;
-  font-weight: 600;
-}
-
-.board-table tbody tr:hover {
-  background: #f8fafc;
-}
-
-.title-cell {
-  white-space: normal;
-  overflow: visible;
-  max-width: 720px;
-}
-
-.title-text {
-  font-weight: 600;
-}
-
-.tag-list {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  margin-top: 6px;
-}
-
-.tag-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px 8px;
-  border-radius: 999px;
-  background: #eff6ff;
-  color: #2563eb;
-  font-size: 0.85rem;
-  font-weight: 600;
-  border: 1px solid #93c5fd;
-  line-height: 1.2;
-}
-
-.tag-badge.clickable-tag {
-  cursor: pointer;
-}
-
-.tag-badge.clickable-tag:hover {
-  background: #dbeafe;
-  border-color: #60a5fa;
-}
-
-.row-tags {
-  margin-top: 6px;
-}
-
-.tag-posts-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.tag-post-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.tag-post-item {
-  padding: 12px 14px;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  cursor: pointer;
-}
-
-.tag-post-item:hover {
-  background: #f8fafc;
-}
-
-.tag-post-title {
-  font-weight: 600;
-  color: #111827;
-}
-
-.tag-post-meta {
-  margin-top: 4px;
-  font-size: 0.9rem;
-  color: #6b7280;
-}
-
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  z-index: 1200;
-}
-
-.modal-card {
-  width: min(760px, 100%);
-  max-height: calc(100vh - 48px);
-  overflow: auto;
-  background: white;
-  border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
-  box-sizing: border-box;
-}
-
-.modal-card label {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: 12px;
-  font-weight: 600;
-  color: #374151;
-}
-
-.modal-card input,
-.modal-card textarea,
-.modal-card select {
-  width: 100%;
-  box-sizing: border-box;
-  border: 1px solid #d1d5db;
-  border-radius: 10px;
-  padding: 10px 12px;
-  font: inherit;
-  background: #fff;
-}
-
-.modal-card textarea {
-  min-height: 120px;
-  resize: vertical;
-}
-
-.modal-card input:focus,
-.modal-card textarea:focus,
-.modal-card select:focus {
-  outline: none;
-  border-color: #60a5fa;
-  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
-}
-
-.modal-card .msg {
-  margin-top: 8px;
-  font-size: 0.95rem;
-}
-
-.image-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 8px 0 12px;
-}
-
-.image-upload-button {
-  padding: 8px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background: white;
-  cursor: pointer;
-}
-
-.hidden-file-input {
-  display: none;
-}
-
-.image-name {
-  color: #6b7280;
-  font-size: 0.9rem;
-}
-
-.image-preview {
-  max-width: 100%;
-  max-height: 220px;
-  margin-top: 8px;
-  border-radius: 8px;
-  object-fit: cover;
-  border: 1px solid #e5e7eb;
-}
-
-.detail-image {
-  max-width: 100%;
-  max-height: 320px;
-  margin-bottom: 16px;
-  border-radius: 10px;
-  object-fit: cover;
-  border: 1px solid #e5e7eb;
-  display: block;
-}
-
-.today-popular-section {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin: 12px 0 20px;
-  padding: 18px 20px;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  background: linear-gradient(90deg, #f8fafc 0%, #eef2ff 100%);
-}
-
-.today-popular-head h2 {
-  margin: 0;
-  font-size: 1.1rem;
-  color: #111827;
-}
-
-.today-popular-viewport {
-  flex: 1;
-  min-height: 32px;
-  display: flex;
-  align-items: center;
-  overflow: hidden;
-}
-
-.today-popular-item {
-  width: 100%;
-}
-
-.today-popular-item-clickable {
-  cursor: pointer;
-}
-
-.today-popular-item-clickable:hover .today-popular-title {
-  text-decoration: underline;
-}
-
-.today-popular-title {
-  font-weight: 600;
-  color: #1d4ed8;
-}
-
-.today-popular-title.empty {
-  color: #6b7280;
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: all 0.6s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-  transform: translateY(8px);
-}
-
-.fade-enter-to,
-.fade-leave-from {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.pagination {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 20px;
-}
-
-.pagination button {
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background: white;
-  padding: 8px 12px;
-  cursor: pointer;
-}
-
-.pagination button.active {
-  background: #2563eb;
-  color: white;
-  border-color: #2563eb;
-}
-
-.pagination button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.category-badge {
-  display: inline-block;
-  padding: 4px 8px;
-  border-radius: 999px;
-  background: #f3f4f6;
-  color: #374151;
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
-.empty {
-  text-align: center;
-  color: #6b7280;
-  padding: 24px 0;
-}
-
-.vote-row {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
-}
-
-.vote {
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  color: white;
-  font-weight: 600;
-}
-
-.vote.like {
-  background: #10b981;
-}
-
-.vote.dislike {
-  background: #ef4444;
-}
-
-.vote:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.vote-note {
-  color: #6b7280;
-  font-size: 0.9rem;
-}
-
-.modal-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 12px;
-  justify-content: flex-end;
-}
-
-.modal-actions button {
-  padding: 10px 14px;
-  border-radius: 10px;
-  border: 1px solid #2563eb;
-  background: #2563eb;
-  color: white;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.modal-actions button:hover {
-  filter: brightness(0.96);
-}
-
-.modal-actions button.secondary {
-  background: #f3f4f6;
-  color: #111827;
-  border: 1px solid #e5e7eb;
-}
-
-.modal-actions button.danger,
-button.danger {
-  background: #ef4444;
-  border-color: #ef4444;
-}
-</style>
