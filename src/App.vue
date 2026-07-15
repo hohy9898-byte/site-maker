@@ -121,6 +121,10 @@
           <textarea v-model="form.content" rows="8"></textarea>
         </label>
 
+        <label>태그
+          <input v-model="form.tagsText" type="text" placeholder="예: 축제, 맛집, 숙박" />
+        </label>
+
         <div class="image-actions">
           <button type="button" class="image-upload-button" @click="triggerImageUpload">사진</button>
           <span v-if="form.imageName" class="image-name">{{ form.imageName }}</span>
@@ -188,6 +192,10 @@
             >
               👎 비추천 {{ detailPost?.dislikes ?? 0 }}
             </button>
+
+            <div v-if="detailPost?.tags?.length" class="tag-list">
+              <span v-for="tag in detailPost.tags" :key="tag" class="tag-badge">#{{ tag }}</span>
+            </div>
 
             <span class="vote-note" v-if="detailPost?.userVote">투표 완료</span>
           </div>
@@ -291,6 +299,21 @@ const formatDisplay = (iso) => {
   return `${pad2(d.getMonth() + 1)}.${pad2(d.getDate())}`
 }
 
+function normalizeTags(value) {
+  return Array.from(
+    new Set(
+      (value || '')
+        .split(',')
+        .map((tag) => tag.trim().replace(/^#/, ''))
+        .filter(Boolean)
+    )
+  )
+}
+
+function getTagsText(tags) {
+  return Array.isArray(tags) ? tags.join(', ') : ''
+}
+
 const categoryLabelMap = {
   all: '전체',
   festival: '축제',
@@ -311,7 +334,8 @@ const normalizePosts = (posts) =>
     userVote: p.userVote ?? null,
     category: ['festival', 'accommodation', 'find', 'free'].includes(p.category) ? p.category : 'free',
     image: p.image || '',
-    imageName: p.imageName || ''
+    imageName: p.imageName || '',
+    tags: Array.isArray(p.tags) ? p.tags : []
   }))
 
 const readImageAsDataUrl = (file) => new Promise((resolve, reject) => {
@@ -613,7 +637,8 @@ const form = ref({
   password: '',
   category: 'free',
   image: '',
-  imageName: ''
+  imageName: '',
+  tagsText: ''
 })
 const formMessage = ref('')
 
@@ -652,7 +677,8 @@ function openCreateModal() {
     password: '',
     category: 'free',
     image: '',
-    imageName: ''
+    imageName: '',
+    tagsText: ''
   }
   formMessage.value = ''
   showFormModal.value = true
@@ -679,6 +705,7 @@ function submitForm() {
       category: form.value.category || 'free',
       image: form.value.image || '',
       imageName: form.value.imageName || '',
+      tags: normalizeTags(form.value.tagsText),
       createdAt: now.toISOString(),
       updatedAt: '',
       likes: 0,
@@ -710,6 +737,7 @@ function submitForm() {
     category: form.value.category || 'free',
     image: form.value.image || rawPosts.value[idx].image || '',
     imageName: form.value.imageName || rawPosts.value[idx].imageName || '',
+    tags: normalizeTags(form.value.tagsText),
     updatedAt: new Date().toISOString()
   }
 
@@ -756,7 +784,8 @@ function attemptStartEdit() {
     password: p.password,
     category: p.category || 'free',
     image: p.image || '',
-    imageName: p.imageName || ''
+    imageName: p.imageName || '',
+    tagsText: getTagsText(p.tags)
   }
   formMessage.value = ''
   detailEditMode.value = true
@@ -1105,6 +1134,7 @@ const detailPost = computed(() => {
   gap: 10px;
   align-items: center;
   margin-bottom: 16px;
+  flex-wrap: wrap;
 }
 
 .vote {
