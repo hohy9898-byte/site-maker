@@ -2,12 +2,12 @@
   <div id="app" class="page-layout">
     <header class="topbar">
       <div class="logo">LocalHub</div>
-      <nav class="region-nav">
-        <button>서울/경기</button>
-        <button>대전/충청</button>
-        <button>구미/경북</button>
-        <button>광주/전라</button>
-        <button>부울경/경남</button>
+      <nav class="category-nav">
+        <button :class="{ active: selectedCategory === 'all' }" @click="selectCategory('all')">전체</button>
+        <button :class="{ active: selectedCategory === 'festival' }" @click="selectCategory('festival')">축제</button>
+        <button :class="{ active: selectedCategory === 'accommodation' }" @click="selectCategory('accommodation')">숙박</button>
+        <button :class="{ active: selectedCategory === 'find' }" @click="selectCategory('find')">찾기</button>
+        <button :class="{ active: selectedCategory === 'free' }" @click="selectCategory('free')">자유</button>
       </nav>
       <button class="icon-search">🔍</button>
     </header>
@@ -38,7 +38,7 @@
     </section>
 
     <section class="board-header">
-      <div class="breadcrumb">홈 &gt; 서울/경기 게시판</div>
+      <div class="breadcrumb">홈 &gt; {{ getCategoryLabel(selectedCategory) }} 게시판</div>
 
       <div class="board-actions">
         <div class="search-actions">
@@ -51,21 +51,6 @@
 
           <div class="write-actions">
             <button class="new-post" @click="openCreateModal">+ 글쓰기</button>
-
-            <div class="category-menu">
-              <button class="category-toggle" @click="toggleCategoryMenu">
-                구분
-                <span class="category-toggle-label">{{ getCategoryLabel(selectedCategory) }}</span>
-              </button>
-
-              <div v-if="showCategoryMenu" class="category-buttons">
-                <button :class="{ active: selectedCategory === 'all' }" @click="selectCategory('all')">전체</button>
-                <button :class="{ active: selectedCategory === 'festival' }" @click="selectCategory('festival')">축제</button>
-                <button :class="{ active: selectedCategory === 'accommodation' }" @click="selectCategory('accommodation')">숙박</button>
-                <button :class="{ active: selectedCategory === 'find' }" @click="selectCategory('find')">찾기</button>
-                <button :class="{ active: selectedCategory === 'free' }" @click="selectCategory('free')">자유</button>
-              </div>
-            </div>
 
             <div class="tab-group">
               <button :class="{ active: selectedTab === 'all' }" @click="selectedTab = 'all'">전체</button>
@@ -438,7 +423,6 @@ const perPage = 10
 const query = ref('')
 const selectedTab = ref('all')
 const selectedCategory = ref('all')
-const showCategoryMenu = ref(false)
 
 let rotationTimer = null
 const todayPopularIndex = ref(0)
@@ -511,13 +495,8 @@ watch(todayPopularPosts, () => {
   startTodayPopularRotation()
 })
 
-function toggleCategoryMenu() {
-  showCategoryMenu.value = !showCategoryMenu.value
-}
-
 function selectCategory(category) {
   selectedCategory.value = category
-  showCategoryMenu.value = false
 }
 
 function isPopularPost(post) {
