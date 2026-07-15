@@ -71,6 +71,7 @@
               <button :class="{ active: selectedTab === 'all' }" @click="selectedTab = 'all'">전체</button>
               <button :class="{ active: selectedTab === 'popular' }" @click="selectedTab = 'popular'">인기글</button>
               <button :class="{ active: selectedTab === 'recycle' }" @click="selectedTab = 'recycle'">분리수거글</button>
+              <button :class="{ active: selectedTab === 'bookmark' }" @click="selectedTab = 'bookmark'">🔖 북마크</button>
             </div>
           </div>
         </div>
@@ -94,7 +95,10 @@
               <span class="category-badge">{{ getCategoryLabel(post.category) }}</span>
             </td>
             <td class="title-cell">
-              <div class="title-text">{{ post.title }}</div>
+              <div class="title-text">
+                <span v-if="post.bookmarked" class="bookmark-flag">🔖</span>
+                {{ post.title }}
+              </div>
               <div v-if="post.tags?.length" class="tag-list row-tags">
                 <button
                   v-for="tag in post.tags"
@@ -180,7 +184,6 @@
         <div class="modal-header">
           <h3 v-if="!detailEditMode">{{ detailPost?.title }}</h3>
           <h3 v-else>게시글 수정</h3>
-          <button class="secondary modal-close-btn" @click="closeDetailModal">✕</button>
         </div>
 
         <template v-if="!detailEditMode">
@@ -547,6 +550,8 @@ const filteredAll = computed(() => {
     tabItems = items.filter((p) => isPopularPost(p) && !isRecyclePost(p))
   } else if (selectedTab.value === 'recycle') {
     tabItems = items.filter((p) => isRecyclePost(p))
+  } else if (selectedTab.value === 'bookmark') {
+    tabItems = items.filter((p) => p.bookmarked)
   } else {
     tabItems = items.filter((p) => !isRecyclePost(p))
   }

@@ -195,6 +195,10 @@
   font-weight: 600;
 }
 
+.bookmark-flag {
+  margin-right: 4px;
+}
+
 .tag-list {
   display: flex;
   gap: 6px;
