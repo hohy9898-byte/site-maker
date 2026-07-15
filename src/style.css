@@ -141,6 +141,12 @@
   border-color: #2563eb;
 }
 
+.tab-group button.active {
+  background: #2563eb;
+  color: white;
+  border-color: #2563eb;
+}
+
 .board-table-wrap {
   background: white;
   border: 1px solid #e5e7eb;
