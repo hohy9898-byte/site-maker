@@ -9,7 +9,7 @@
         <button :class="{ active: selectedCategory === 'find' }" @click="selectCategory('find')">찾기</button>
         <button :class="{ active: selectedCategory === 'free' }" @click="selectCategory('free')">자유</button>
       </nav>
-      <button class="icon-search">🧭</button>
+      <FestivalCalendar />
     </header>
 
     <section class="today-popular-section">
@@ -349,6 +349,7 @@
 <script setup>
 import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
+import FestivalCalendar from '../components/FestivalCalendar.vue'
 
 const router = useRouter()
 
