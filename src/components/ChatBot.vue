@@ -65,6 +65,28 @@ async function quickQuestion(text, category = null) {
   await sendMessage(category);
 }
 
+// 이번 달/다음 달 실제 연월을 계산해 정확한 날짜로 질문 (조원 코드 병합)
+function askThisMonthFestival() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+
+  quickQuestion(`${year}년 ${month}월 부산 축제 알려줘`);
+}
+
+function askNextMonthFestival() {
+  const now = new Date();
+  let year = now.getFullYear();
+  let month = now.getMonth() + 2;
+
+  if (month > 12) {
+    month = 1;
+    year++;
+  }
+
+  quickQuestion(`${year}년 ${month}월 부산 축제 알려줘`);
+}
+
 async function scrollBottom() {
   await nextTick();
 
@@ -144,11 +166,11 @@ onMounted(() => {
   <!-- 축제 메뉴 -->
   <div class="quick-menu" v-if="menu==='festival'">
 
-    <button @click="quickQuestion('이번 달 부산 축제 알려줘')">
+    <button @click="askThisMonthFestival()">
       📅 이번 달
     </button>
 
-    <button @click="quickQuestion('다음 달 부산 축제 알려줘')">
+    <button @click="askNextMonthFestival()">
       🗓 다음 달
     </button>
 

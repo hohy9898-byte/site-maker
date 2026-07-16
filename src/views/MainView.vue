@@ -83,8 +83,12 @@
             <div class="card-info">
               <div class="card-title-row">
                 <h3>{{ festival.title }}</h3>
+                <span :class="['status-tag', getFestivalStatus(festival).className]">
+                  {{ getFestivalStatus(festival).text }}
+                </span>
               </div>
-              <p class="desc">{{ festival.addr1 || '부산광역시 일원' }}</p>
+              <p class="desc">{{ getShortProgram(festival) }}</p>
+              <p class="location-text">📍 {{ festival.eventplace || festival.addr1 || '부산광역시 일원' }}</p>
             </div>
           </div>
 
@@ -166,16 +170,16 @@ const festivalData = {
   "contentTypeId": 15,
   "total": 72,
   "items": [
-    { "addr1": "부산광역시 해운대구 APEC로 55 (우동)", "firstimage": "https://tong.visitkorea.or.kr/cms/resource/92/4077792_image2_1.jpg", "title": "2026 부산국제불교박람회", "contentid": "2644679" },
-    { "addr1": "부산광역시 수영구 광안해변로 219 (광안동)", "firstimage": "https://tong.visitkorea.or.kr/cms/resource/41/4065341_image2_1.jpg", "title": "2026 나이트레이스 인 부산", "contentid": "3498395" },
-    { "addr1": "부산광역시 해운대구 APEC로 55 (우동)", "firstimage": "https://tong.visitkorea.or.kr/cms/resource/57/4077757_image2_1.jpg", "title": "제48차 유네스코 세계유산위원회 특별공연 산화비 : HEXAGRAM 22", "contentid": "4077756" },
-    { "addr1": "부산광역시 사상구 삼락동", "firstimage": "https://tong.visitkorea.or.kr/cms/resource/06/4040606_image2_1.jpg", "title": "부산국제록페스티벌", "contentid": "140799" },
-    { "addr1": "부산광역시 동구 이순신대로 164 (초량동)", "firstimage": "https://tong.visitkorea.or.kr/cms/resource/70/4058670_image2_1.jpg", "title": "부산항축제", "contentid": "1007868" },
-    { "addr1": "부산광역시 수영구 광안해변로 219 (광안동)", "firstimage": "https://tong.visitkorea.or.kr/cms/resource/10/4066810_image2_1.JPG", "title": "광안리어방축제", "contentid": "506545" },
-    { "addr1": "부산광역시 해운대구 수영강변대로 85 (우동)", "firstimage": "https://tong.visitkorea.or.kr/cms/resource/37/4069137_image2_1.jpg", "title": "2026 부산나이트워크42K", "contentid": "2991394" },
-    { "addr1": "부산광역시 수영구 민락동 110-19", "firstimage": "https://tong.visitkorea.or.kr/cms/resource/73/4070173_image2_1.jpg", "title": "2026 부산바다도서관", "contentid": "3497353" },
-    { "addr1": "부산광역시 중구 용두산길 37-55 (광복동2가)", "firstimage": "https://tong.visitkorea.or.kr/cms/resource/73/4067473_image2_1.jpg", "title": "2026 용골 댄스 페스타", "contentid": "2952109" },
-    { "addr1": "부산광역시 해운대구 APEC로 55 (우동)", "firstimage": "https://tong.visitkorea.or.kr/cms/resource/26/4055726_image2_1.jpeg", "title": "세계유산위원회 대한민국관(K-Heritage House)", "contentid": "4055637" },
+    { "addr1": "부산광역시 해운대구 APEC로 55 (우동)", "firstimage": "https://tong.visitkorea.or.kr/cms/resource/92/4077792_image2_1.jpg", "title": "2026 부산국제불교박람회", "contentid": "2644679", "eventstartdate": "20260806", "eventenddate": "20260809", "eventplace": "BEXCO 부산 벡스코 제1전시장(3홀)", "program": "- 주요 프로그램 : 주제전 / 명상문화전 및 명상 공예전 / 명상 예술전 / 선명상 체험전 / 발우공양 및 사찰음식전 / 무대 프로그램 / 체험 프로그램 등\n\n1. 주제전" },
+    { "addr1": "부산광역시 수영구 광안해변로 219 (광안동)", "firstimage": "https://tong.visitkorea.or.kr/cms/resource/41/4065341_image2_1.jpg", "title": "2026 나이트레이스 인 부산", "contentid": "3498395", "eventstartdate": "20260801", "eventenddate": "20260801", "eventplace": "광안리 해수욕장 / 벡스코", "program": "1. 주요 프로그램 : 나이트레이스 (광안대교를 배경으로 하는 야간 러닝 이벤트)\n- 티켓 구매자에 한하여 참여 가능" },
+    { "addr1": "부산광역시 해운대구 APEC로 55 (우동)", "firstimage": "https://tong.visitkorea.or.kr/cms/resource/57/4077757_image2_1.jpg", "title": "제48차 유네스코 세계유산위원회 특별공연 산화비 : HEXAGRAM 22", "contentid": "4077756", "eventstartdate": "20260723", "eventenddate": "20260724", "eventplace": "벡스코 오디토리움", "program": "- 주요 프로그램 : 공연\n- 부대 행사 및 프로그램" },
+    { "addr1": "부산광역시 사상구 삼락동", "firstimage": "https://tong.visitkorea.or.kr/cms/resource/06/4040606_image2_1.jpg", "title": "부산국제록페스티벌", "contentid": "140799", "eventstartdate": "20261002", "eventenddate": "20261004", "eventplace": "삼락생태공원", "program": "1. 메인프로그램 : 부산국제록페스티벌\n2. 부대프로그램" },
+    { "addr1": "부산광역시 동구 이순신대로 164 (초량동)", "firstimage": "https://tong.visitkorea.or.kr/cms/resource/70/4058670_image2_1.jpg", "title": "부산항축제", "contentid": "1007868", "eventstartdate": "20260619", "eventenddate": "20260620", "eventplace": "북항 친수공원 일원", "program": "개막행사, 부산항불꽃쇼, 부산항투어, 보트투어, 기타 체험·참여 프로그램 등" },
+    { "addr1": "부산광역시 수영구 광안해변로 219 (광안동)", "firstimage": "https://tong.visitkorea.or.kr/cms/resource/10/4066810_image2_1.JPG", "title": "광안리어방축제", "contentid": "506545", "eventstartdate": "20260612", "eventenddate": "20260614", "eventplace": "광안리해변 및 수영사적공원 일원", "program": "1. 메인프로그램 : 뮤지컬어방, 경상좌수사행렬 퍼레이드, 어방민속마을\n2. 부대프로그램" },
+    { "addr1": "부산광역시 해운대구 수영강변대로 85 (우동)", "firstimage": "https://tong.visitkorea.or.kr/cms/resource/37/4069137_image2_1.jpg", "title": "2026 부산나이트워크42K", "contentid": "2991394", "eventstartdate": "20260829", "eventenddate": "20260830", "eventplace": "APEC나루공원", "program": "- 주요 프로그램 : 수영강 및 온천천 코스 걷기 (8K·16K·24K·42K) / 워밍업 스트레칭 등\n- 부대 행사" },
+    { "addr1": "부산광역시 수영구 민락동 110-19", "firstimage": "https://tong.visitkorea.or.kr/cms/resource/73/4070173_image2_1.jpg", "title": "2026 부산바다도서관", "contentid": "3497353", "eventstartdate": "20260613", "eventenddate": "20260705", "eventplace": "민락수변공원 일원", "program": "- 주요 프로그램 : 커뮤니티존(북스팟)\n- 부대 행사 및 프로그램" },
+    { "addr1": "부산광역시 중구 용두산길 37-55 (광복동2가)", "firstimage": "https://tong.visitkorea.or.kr/cms/resource/73/4067473_image2_1.jpg", "title": "2026 용골 댄스 페스타", "contentid": "2952109", "eventstartdate": "20260620", "eventenddate": "20260620", "eventplace": "용두산공원 일원", "program": "- 주요 프로그램 : 청소년 댄스 경연대회\n- 부대 행사" },
+    { "addr1": "부산광역시 해운대구 APEC로 55 (우동)", "firstimage": "https://tong.visitkorea.or.kr/cms/resource/26/4055726_image2_1.jpeg", "title": "세계유산위원회 대한민국관(K-Heritage House)", "contentid": "4055637", "eventstartdate": "20260720", "eventenddate": "20260729", "eventplace": "부산 벡스코 제1전시장 2B, 3", "program": "1. 유산의 과거·현재·미래\n-세계유산&유네스코관: 17개 세계유산" },
     { "addr1": "부산광역시 북구 덕천동 763", "firstimage": "https://tong.visitkorea.or.kr/cms/resource/30/4054930_image2_1.jpg", "title": "부산 밀 페스티벌", "contentid": "3303393" },
     { "addr1": "부산광역시 중구 중앙동4가", "firstimage": "https://tong.visitkorea.or.kr/cms/resource/81/4065381_image2_1.jpg", "title": "포트빌리지 부산 2026", "contentid": "3485135" },
     { "addr1": "부산광역시 해운대구 수영강변대로 120 (우동)", "firstimage": "https://tong.visitkorea.or.kr/cms/resource/90/4065290_image2_1.jpg", "title": "2026 부산푸드필름페스타", "contentid": "2719122" },
@@ -188,8 +192,8 @@ const festivalData = {
     { "addr1": "부산광역시 중구 광복중앙로 13 (신창동1가)", "firstimage": "https://tong.visitkorea.or.kr/cms/resource/00/4061800_image2_1.JPG", "title": "작당페스타", "contentid": "3115722" },
     { "addr1": "부산광역시 부산진구 동성로112번길 121-1", "firstimage": "https://tong.visitkorea.or.kr/cms/resource/31/4054831_image2_1.jpg", "title": "부산연등회", "contentid": "1553601" },
     { "addr1": "부산광역시 기장군 기장읍 기장해안로 605", "firstimage": "https://tong.visitkorea.or.kr/cms/resource/20/4059220_image2_1.jpg", "title": "기장멸치축제", "contentid": "292977" },
-    { "addr1": "부산광역시 해운대구 APEC로 30 (우동)", "firstimage": "https://tong.visitkorea.or.kr/cms/resource/66/4059066_image2_1.jpg", "title": "K-핸드메이드페어 부산 2026", "contentid": "2523149" },
-    { "addr1": "부산광역시 해운대구 APEC로 30 (우동)", "firstimage": "", "title": "K-일러스트레이션페어 부산 2026", "contentid": "2704473" },
+    { "addr1": "부산광역시 해운대구 APEC로 30 (우동)", "firstimage": "https://tong.visitkorea.or.kr/cms/resource/66/4059066_image2_1.jpg", "title": "K-핸드메이드페어 부산 2026", "contentid": "2523149", "eventstartdate": "20260724", "eventenddate": "20260726", "eventplace": "벡스코 제2전시장", "program": "- 주요 프로그램 : 휴꾸존 기획존" },
+    { "addr1": "부산광역시 해운대구 APEC로 30 (우동)", "firstimage": "", "title": "K-일러스트레이션페어 부산 2026", "contentid": "2704473", "eventstartdate": "20260724", "eventenddate": "20260726", "eventplace": "벡스코 제2전시장 A, B홀", "program": "- 주요 프로그램 : 일러스트레이션 관련 개인 및 기업 브랜드 전시 부스\n- 부대 행사" },
     { "addr1": "부산 강서구 대저1동 1-17", "firstimage": "https://tong.visitkorea.or.kr/cms/resource/77/4046477_image2_1.JPG", "title": "강서 낙동강30리 벚꽃축제", "contentid": "2536122" },
     { "addr1": "부산광역시 해운대구 APEC로 55 (우동)", "firstimage": "https://tong.visitkorea.or.kr/cms/resource/42/4038942_image2_1.jpg", "title": "2026 대한민국 과학축제 with 부산과학축전", "contentid": "2740921" },
     { "addr1": "부산광역시 영도구 해양로301번길 55 (동삼동)", "firstimage": "https://tong.visitkorea.or.kr/cms/resource/41/4054241_image2_1.png", "title": "구룡마을 벚꽃축제", "contentid": "3359409" },
@@ -235,21 +239,75 @@ const festivalData = {
     { "addr1": "부산광역시 해운대구 수영강변대로 120 (우동)", "firstimage": "http://tong.visitkorea.or.kr/cms/resource/10/3515310_image2_1.jpg", "title": "부산국제AI영화제", "contentid": "3515311" },
     { "addr1": "부산광역시 사하구 다대동", "firstimage": "http://tong.visitkorea.or.kr/cms/resource/21/2553821_image2_1.jpg", "title": "대한민국 국제해양레저위크(KIMA WEEK)", "contentid": "2019366" },
     { "addr1": "부산광역시 해운대구 APEC로 55 (우동)", "firstimage": "http://tong.visitkorea.or.kr/cms/resource/37/3510437_image2_1.jpg", "title": "부산인디커넥트페스티벌", "contentid": "2736033" },
-    { "addr1": "부산광역시 사하구 다대포 해수욕장", "firstimage": "http://tong.visitkorea.or.kr/cms/resource/58/3504958_image2_1.jpg", "title": "부산바다축제", "contentid": "142080" },
+    { "addr1": "부산광역시 사하구 다대포 해수욕장", "firstimage": "http://tong.visitkorea.or.kr/cms/resource/58/3504958_image2_1.jpg", "title": "부산바다축제", "contentid": "142080", "eventstartdate": "20260807", "eventenddate": "20260813", "eventplace": "다대포 해수욕장 일원", "program": "1. 메인프로그램\n- 개막행사" },
     { "addr1": "부산광역시 해운대구 수영강변대로 120 (우동)", "firstimage": "http://tong.visitkorea.or.kr/cms/resource/85/3502985_image2_1.png", "title": "2025 부산여행영화제", "contentid": "2830695" },
     { "addr1": "부산광역시 사하구 다대로 지하692 (다대동)", "firstimage": "http://tong.visitkorea.or.kr/cms/resource/05/3502005_image2_1.jpg", "title": "다대포 선셋 영화 축제", "contentid": "3383748" }
   ]
 }
 
-// 컴포넌트 마운트 시 전체 배열에서 무작위로 2개 추출하는 로직 적용
+// YYYYMMDD 형태 문자열을 Date 객체로 파싱 변환 (조원 코드 병합)
+const parseDateString = (dateStr) => {
+  if (!dateStr) return null
+  const year = parseInt(dateStr.substring(0, 4))
+  const month = parseInt(dateStr.substring(4, 6)) - 1
+  const day = parseInt(dateStr.substring(6, 8))
+  return new Date(year, month, day)
+}
+
+// 진행중 / D-Day / 종료 상태 배지 도출 (조원 코드 병합)
+function getFestivalStatus(festival) {
+  const start = parseDateString(festival.eventstartdate)
+  const end = parseDateString(festival.eventenddate)
+
+  if (!start || !end) return { text: '미정', className: 'bg-slate-200 text-slate-600' }
+
+  const today = new Date()
+  const sDate = new Date(start.getFullYear(), start.getMonth(), start.getDate())
+  const eDate = new Date(end.getFullYear(), end.getMonth(), end.getDate())
+  const tDate = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+
+  if (tDate >= sDate && tDate <= eDate) {
+    return { text: '진행중', className: 'bg-emerald-100 text-emerald-700 font-extrabold' }
+  } else if (tDate < sDate) {
+    const diffDays = Math.ceil((sDate.getTime() - tDate.getTime()) / (1000 * 60 * 60 * 24))
+    return { text: `D-${diffDays}`, className: 'bg-blue-100 text-blue-700 font-extrabold' }
+  } else {
+    return { text: '종료', className: 'bg-rose-100 text-gray-400' }
+  }
+}
+
+// 프로그램 설명 첫 줄만 추출 (조원 코드 병합)
+function getShortProgram(festival) {
+  if (!festival.program) return festival.addr1 || '상세 프로그램 정보 준비 중입니다.'
+  return festival.program.split('\n')[0]
+}
+
+// 컴포넌트 마운트 시 진행중/한 달 이내 시작하는 축제 중 무작위 2개 추출 (조원 코드 병합)
 onMounted(() => {
   const items = festivalData.items
-  if (items && items.length >= 2) {
+  const today = new Date()
+  const oneMonthLater = new Date(today)
+  oneMonthLater.setMonth(today.getMonth() + 1)
+
+  const eligibleFestivals = items.filter((item) => {
+    const start = parseDateString(item.eventstartdate)
+    const end = parseDateString(item.eventenddate)
+    if (!start || !end) return false
+
+    const isOngoing = today >= start && today <= end
+    const isWithinOneMonth = start >= today && start <= oneMonthLater
+
+    return isOngoing || isWithinOneMonth
+  })
+
+  const pool = eligibleFestivals.length >= 2 ? eligibleFestivals : items
+
+  if (pool && pool.length >= 2) {
     // 원본 데이터를 해치지 않기 위해 얕은 복사 후 셔플 진행
-    const shuffled = [...items].sort(() => 0.5 - Math.random())
+    const shuffled = [...pool].sort(() => 0.5 - Math.random())
     selectedFestivals.value = shuffled.slice(0, 2)
   } else {
-    selectedFestivals.value = items || []
+    selectedFestivals.value = pool || []
   }
 
   if (todayPopularPosts.value.length > 1) {
@@ -275,7 +333,7 @@ const goToPage = (path) => {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  height: calc(100vh - 50px);
   width: 100vw;
   box-sizing: border-box;
   padding: 10px 40px;
@@ -530,7 +588,7 @@ const goToPage = (path) => {
   font-size: 1.5rem;
   font-weight: 900;
   color: #1e293b;
-  margin-bottom: 12px;
+  margin-bottom: 4px;
   text-align: left;
 }
 
@@ -550,10 +608,10 @@ const goToPage = (path) => {
   transform: translateY(-2px);
 }
 
-/* 280px 고유 카드 비율 및 동적 이미지 삽입 스케일 조정 */
+/* 카드 이미지 높이: 장소 텍스트 라인 추가분을 확보하기 위해 280px에서 축소 */
 .card-image-placeholder {
   width: 100%;
-  height: 280px;
+  height: 235px;
   background: rgba(226, 232, 240, 0.7);
   border-radius: 16px;
   display: flex;
@@ -582,7 +640,7 @@ const goToPage = (path) => {
   justify-content: space-between;
   align-items: center;
   gap: 10px;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .card-title-row h3 {
@@ -590,15 +648,48 @@ const goToPage = (path) => {
   font-weight: 800;
   color: #0f172a;
   margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-grow: 1;
 }
+
+/* 진행중/D-Day/종료 상태 배지 (조원 코드 병합) */
+.status-tag {
+  font-size: 0.72rem;
+  padding: 3px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.bg-slate-200 { background: #e2e8f0; }
+.text-slate-600 { color: #475569; }
+.bg-emerald-100 { background: #d1fae5; }
+.text-emerald-700 { color: #047857; }
+.bg-blue-100 { background: #dbeafe; }
+.text-blue-700 { color: #1d4ed8; }
+.bg-rose-100 { background: #ffe4e6; }
+.text-gray-400 { color: #94a3b8; }
+.font-extrabold { font-weight: 800; }
 
 .card-info .desc {
   font-size: 0.82rem;
   color: #475569;
-  margin: 0;
+  margin: 0 0 2px 0;
   line-height: 1.4;
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis; /* 주소가 너무 길어질 경우 말줄임표 처리 */
+  text-overflow: ellipsis; /* 프로그램 설명이 너무 길어질 경우 말줄임표 처리 */
+}
+
+/* 축제 장소 표시 (조원 코드 병합) */
+.location-text {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 </style>
