@@ -18,7 +18,7 @@ LocalHub 부산 관광 챗봇입니다.
   }
 ]);
 
-async function sendMessage() {
+async function sendMessage(category = null) {
   if (!input.value.trim() || isLoading.value) return;
 
   const question = input.value;
@@ -38,7 +38,8 @@ async function sendMessage() {
 
     messages.value.push({
       role: "assistant",
-      text: answer
+      text: answer,
+      category
     });
   } catch (e) {
     messages.value.push({
@@ -52,9 +53,9 @@ async function sendMessage() {
   await scrollBottom();
 }
 
-async function quickQuestion(text) {
+async function quickQuestion(text, category = null) {
   input.value = text;
-  await sendMessage();
+  await sendMessage(category);
 }
 
 async function scrollBottom() {
@@ -84,7 +85,7 @@ async function scrollBottom() {
       class="message"
       :class="m.role"
     >
-      <div class="bubble">
+      <div class="bubble" :class="{ center: m.category === 'stay' }">
         {{ m.text }}
       </div>
     </div>
@@ -108,7 +109,7 @@ async function scrollBottom() {
       🏝 관광지
     </button>
 
-    <button @click="quickQuestion('부산 숙박 추천해줘')">
+    <button @click="quickQuestion('부산 숙박 추천해줘', 'stay')">
       🏨 숙박
     </button>
 
@@ -249,6 +250,10 @@ color:white;
 .assistant .bubble{
 background:white;
 border:1px solid #ddd;
+text-align:left;
+}
+
+.assistant .bubble.center{
 text-align:center;
 }
 
