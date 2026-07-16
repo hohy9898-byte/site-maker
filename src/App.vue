@@ -9,7 +9,7 @@
         <button :class="{ active: selectedCategory === 'find' }" @click="selectCategory('find')">찾기</button>
         <button :class="{ active: selectedCategory === 'free' }" @click="selectCategory('free')">자유</button>
       </nav>
-      <button class="icon-search">🔍</button>
+      <button class="icon-search">🧭</button>
     </header>
 
     <section class="today-popular-section">
