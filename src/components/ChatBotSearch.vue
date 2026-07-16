@@ -1,14 +1,15 @@
 <template>
   <div class="search-container">
-    <div class="search-box" @click="goToChatBot">
+    <div class="search-box">
       <span class="search-icon">🔍</span>
-      <input 
-        type="text" 
-        :placeholder="currentPlaceholder" 
-        readonly
+      <input
+        type="text"
+        v-model="userInput"
+        :placeholder="currentPlaceholder"
         class="search-input"
+        @keyup.enter="askQuestion"
       />
-      <button class="search-btn">질문하기</button>
+      <button class="search-btn" @click="askQuestion">질문하기</button>
     </div>
   </div>
 </template>
@@ -25,6 +26,7 @@ const placeholders = [
 ]
 
 const currentPlaceholder = ref(placeholders[0])
+const userInput = ref('')
 let currentIndex = 0
 let timer = null
 
@@ -39,8 +41,9 @@ onUnmounted(() => {
   clearInterval(timer)
 })
 
-const goToChatBot = () => {
-  router.push('/chatbot')
+const askQuestion = () => {
+  const question = userInput.value.trim() || currentPlaceholder.value
+  router.push({ path: '/chatbot', query: { q: question } })
 }
 </script>
 
@@ -58,24 +61,28 @@ const goToChatBot = () => {
   padding: 12px 18px;
   border: none;
   box-shadow: inset 3px 3px 6px #d1d9e6, inset -3px -3px 6px #ffffff;
-  cursor: pointer;
   transition: all 0.2s ease;
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
 }
 
 .search-icon {
+  flex-shrink: 0;
   margin-right: 12px;
   font-size: 1.1rem;
   color: #a0aec0;
 }
 
 .search-input {
+  flex: 1 1 auto;
+  min-width: 0;
   border: none;
   background: transparent;
   outline: none;
-  width: 100%;
   font-size: 0.95rem;
   color: #4a5568;
-  cursor: pointer;
+  cursor: text;
   font-weight: 500;
 }
 
@@ -84,6 +91,7 @@ const goToChatBot = () => {
 }
 
 .search-btn {
+  flex-shrink: 0;
   background: #1a73e8;
   color: white;
   border: none;

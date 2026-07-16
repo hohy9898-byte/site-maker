@@ -299,7 +299,7 @@ const goToPage = (path) => {
 .speech-bubble {
   position: relative;
   border-radius: 24px;
-  padding: 14px 24px;
+  padding: 14px 10px;
   width: 100%;
   box-sizing: border-box;
 }

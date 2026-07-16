@@ -1,6 +1,13 @@
 <script setup>
-import { ref, nextTick } from "vue";
+import { ref, nextTick, onMounted } from "vue";
 import { askGPT } from "../services/openai";
+
+const props = defineProps({
+  initialQuestion: {
+    type: String,
+    default: ""
+  }
+});
 
 const input = ref("");
 const menu = ref("main");
@@ -65,6 +72,13 @@ async function scrollBottom() {
     history.value.scrollTop = history.value.scrollHeight;
   }
 }
+
+onMounted(() => {
+  if (props.initialQuestion.trim()) {
+    input.value = props.initialQuestion;
+    sendMessage();
+  }
+});
 </script>
 
 <template>
