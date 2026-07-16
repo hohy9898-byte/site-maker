@@ -43,7 +43,7 @@ async function sendMessage() {
   } catch (e) {
     messages.value.push({
       role: "assistant",
-      text: "죄송합니다. 오류가 발생했습니다."
+      text: `⚠️ 오류가 발생했습니다: ${e.message || "알 수 없는 오류"}`
     });
   }
 

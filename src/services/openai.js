@@ -76,10 +76,8 @@ ${context}
 
   const result = await response.json();
 
-  console.log(result);
-
   if (!response.ok) {
-    return result.error?.message || "OpenAI 오류";
+    throw new Error(result.error?.message || `OpenAI 요청 실패 (status ${response.status})`);
   }
 
   return result.choices[0].message.content;

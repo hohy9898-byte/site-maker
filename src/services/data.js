@@ -1,21 +1,30 @@
-export async function loadData() {
+let cachedDataPromise = null;
 
-  const stay = await fetch("/data/부산_숙박.json");
-  const festival = await fetch("/data/부산_축제공연행사.json");
-  const tour = await fetch("/data/부산_관광지.json");
-  const leisure = await fetch("/data/부산_레포츠.json");
-  const culture = await fetch("/data/부산_문화시설.json");
-  const shopping = await fetch("/data/부산_쇼핑.json");
-  const course = await fetch("/data/부산_여행코스.json");
+async function fetchJson(path) {
+  const res = await fetch(path);
+  return res.json();
+}
 
-  return {
-    stay: await stay.json(),
-    festival: await festival.json(),
-    tour: await tour.json(),
-    leisure: await leisure.json(),
-    culture: await culture.json(),
-    shopping: await shopping.json(),
-    course: await course.json()
-  };
+export function loadData() {
+  if (!cachedDataPromise) {
+    cachedDataPromise = Promise.all([
+      fetchJson("/data/부산_숙박.json"),
+      fetchJson("/data/부산_축제공연행사.json"),
+      fetchJson("/data/부산_관광지.json"),
+      fetchJson("/data/부산_레포츠.json"),
+      fetchJson("/data/부산_문화시설.json"),
+      fetchJson("/data/부산_쇼핑.json"),
+      fetchJson("/data/부산_여행코스.json")
+    ]).then(([stay, festival, tour, leisure, culture, shopping, course]) => ({
+      stay,
+      festival,
+      tour,
+      leisure,
+      culture,
+      shopping,
+      course
+    }));
+  }
 
+  return cachedDataPromise;
 }
