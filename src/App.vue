@@ -245,7 +245,7 @@
           <p class="msg" v-if="shareMessage">{{ shareMessage }}</p>
 
           <label>비밀번호 확인
-            <input v-model="verifyPassword" type="password" placeholder="수정·삭제 비밀번호" />
+            <input v-model="verifyPassword" type="password" placeholder="수정·삭제·공유 비밀번호" />
           </label>
 
           <div class="modal-actions">
