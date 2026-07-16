@@ -19,7 +19,7 @@ const messages = ref([
     role: "assistant",
     text: `안녕하세요 😊
 
-LocalHub 부산 관광 챗봇입니다.
+축제, 어디까지 가는 거예요? 부산 관광 챗봇입니다.
 
 원하는 메뉴를 선택해주세요.`
   }
@@ -87,7 +87,7 @@ onMounted(() => {
 
   <!-- 헤더 -->
   <div class="header">
-    🤖 LocalHub 부산 챗봇
+    🤖 축제, 어디까지 가는 거예요? AI 챗봇
   </div>
 
   <!-- 채팅창 -->

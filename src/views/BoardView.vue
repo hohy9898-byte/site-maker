@@ -1,7 +1,7 @@
 <template>
   <div id="app" class="page-layout">
     <header class="topbar">
-      <div class="logo">LocalHub</div>
+      <button type="button" class="logo" @click="goToMain">축제, 어디까지 가는 거예요?</button>
       <nav class="category-nav">
         <button :class="{ active: selectedCategory === 'all' }" @click="selectCategory('all')">전체</button>
         <button :class="{ active: selectedCategory === 'festival' }" @click="selectCategory('festival')">축제</button>
@@ -348,6 +348,13 @@
 
 <script setup>
 import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+function goToMain() {
+  router.push('/')
+}
 
 const STORAGE_KEY = 'community-posts'
 const VOTE_STORAGE_KEY = 'community-votes'
@@ -954,3 +961,21 @@ const detailPost = computed(() => {
   }
 })
 </script>
+
+<style scoped>
+.logo {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a73e8;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.logo:hover {
+  color: #1557b0;
+}
+</style>
