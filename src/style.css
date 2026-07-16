@@ -197,6 +197,47 @@
   margin-top: 6px;
 }
 
+.tag-input-list {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: -6px 0 12px;
+}
+
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px 4px 6px;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #2563eb;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid #93c5fd;
+  line-height: 1.2;
+}
+
+.tag-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: #dbeafe;
+  color: #2563eb;
+  font-size: 0.7rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.tag-remove:hover {
+  background: #bfdbfe;
+}
+
 .tag-posts-header {
   display: flex;
   align-items: center;

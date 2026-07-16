@@ -124,8 +124,21 @@
         </label>
 
         <label>태그
-          <input v-model="form.tagsText" type="text" placeholder="예: 축제, 맛집, 숙박" />
+          <input
+            v-model="form.tagInput"
+            type="text"
+            placeholder="태그 입력 후 Enter 또는 Space"
+            @keydown.enter.prevent="addTagFromInput"
+            @keydown.space.prevent="addTagFromInput"
+          />
         </label>
+
+        <div v-if="form.tags.length" class="tag-input-list">
+          <span v-for="(tag, idx) in form.tags" :key="tag" class="tag-chip">
+            <button type="button" class="tag-remove" @click="removeTag(idx)">✕</button>
+            #{{ tag }}
+          </span>
+        </div>
 
         <div class="image-actions">
           <button type="button" class="image-upload-button" @click="triggerImageUpload">사진</button>
@@ -142,7 +155,7 @@
 
         <img v-if="form.image" :src="form.image" class="image-preview" alt="첨부 이미지 미리보기" />
 
-        <label>카테고리
+        <label>게시판
           <select v-model="form.category">
             <option value="festival">축제</option>
             <option value="accommodation">숙박</option>
@@ -255,8 +268,21 @@
           </label>
 
           <label>태그
-            <input v-model="form.tagsText" type="text" placeholder="예: 축제, 맛집, 숙박" />
+            <input
+              v-model="form.tagInput"
+              type="text"
+              placeholder="태그 입력 후 Enter 또는 Space"
+              @keydown.enter.prevent="addTagFromInput"
+              @keydown.space.prevent="addTagFromInput"
+            />
           </label>
+
+          <div v-if="form.tags.length" class="tag-input-list">
+            <span v-for="(tag, idx) in form.tags" :key="tag" class="tag-chip">
+              <button type="button" class="tag-remove" @click="removeTag(idx)">✕</button>
+              #{{ tag }}
+            </span>
+          </div>
 
           <div class="image-actions">
             <button type="button" class="image-upload-button" @click="triggerImageUpload">사진</button>
@@ -273,7 +299,7 @@
 
           <img v-if="form.image" :src="form.image" class="image-preview" alt="첨부 이미지 미리보기" />
 
-          <label>카테고리
+          <label>게시판
             <select v-model="form.category">
               <option value="festival">축제</option>
               <option value="accommodation">숙박</option>
@@ -357,19 +383,10 @@ const formatDisplay = (iso) => {
   return `${pad2(d.getMonth() + 1)}.${pad2(d.getDate())}`
 }
 
-function normalizeTags(value) {
-  return Array.from(
-    new Set(
-      (value || '')
-        .split(',')
-        .map((tag) => tag.trim().replace(/^#/, ''))
-        .filter(Boolean)
-    )
-  )
-}
-
-function getTagsText(tags) {
-  return Array.isArray(tags) ? tags.join(', ') : ''
+function collectFormTags() {
+  const pending = form.value.tagInput.trim().replace(/^#/, '')
+  const combined = pending ? [...form.value.tags, pending] : form.value.tags
+  return Array.from(new Set(combined.filter(Boolean)))
 }
 
 const categoryLabelMap = {
@@ -566,7 +583,8 @@ const form = ref({
   category: 'free',
   image: '',
   imageName: '',
-  tagsText: ''
+  tags: [],
+  tagInput: ''
 })
 const formMessage = ref('')
 
@@ -633,10 +651,23 @@ function openCreateModal() {
     category: 'free',
     image: '',
     imageName: '',
-    tagsText: ''
+    tags: [],
+    tagInput: ''
   }
   formMessage.value = ''
   showFormModal.value = true
+}
+
+function addTagFromInput() {
+  const raw = form.value.tagInput.trim().replace(/^#/, '')
+  if (raw && !form.value.tags.includes(raw)) {
+    form.value.tags.push(raw)
+  }
+  form.value.tagInput = ''
+}
+
+function removeTag(index) {
+  form.value.tags.splice(index, 1)
 }
 
 function closeFormModal() {
@@ -660,7 +691,7 @@ function submitForm() {
       category: form.value.category || 'free',
       image: form.value.image || '',
       imageName: form.value.imageName || '',
-      tags: normalizeTags(form.value.tagsText),
+      tags: collectFormTags(),
       createdAt: now.toISOString(),
       updatedAt: '',
       likes: 0,
@@ -692,7 +723,7 @@ function submitForm() {
     category: form.value.category || 'free',
     image: form.value.image || rawPosts.value[idx].image || '',
     imageName: form.value.imageName || rawPosts.value[idx].imageName || '',
-    tags: normalizeTags(form.value.tagsText),
+    tags: collectFormTags(),
     updatedAt: new Date().toISOString()
   }
 
@@ -776,7 +807,8 @@ function attemptStartEdit() {
     category: p.category || 'free',
     image: p.image || '',
     imageName: p.imageName || '',
-    tagsText: getTagsText(p.tags)
+    tags: Array.isArray(p.tags) ? [...p.tags] : [],
+    tagInput: ''
   }
   formMessage.value = ''
   detailEditMode.value = true
