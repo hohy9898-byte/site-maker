@@ -26,7 +26,19 @@
               <span class="posts-title">오늘의 인기글 🔥</span>
             </div>
             <div class="posts-carousel-placeholder">
-              <p class="placeholder-text">💬 광안리 드론쇼 명당 실시간 공유합니다! (조원 코드 연동 영역)</p>
+              <Transition name="fade" mode="out-in">
+                <p
+                  v-if="currentPopularPost"
+                  :key="currentPopularPost.id"
+                  class="placeholder-text popular-post-clickable"
+                  @click="goToPopularPost(currentPopularPost.id)"
+                >
+                  💬 {{ currentPopularPost.title }}
+                </p>
+                <p v-else key="empty" class="placeholder-text empty">
+                  오늘 작성된 인기글이 아직 없습니다.
+                </p>
+              </Transition>
             </div>
           </div>
 
@@ -84,12 +96,68 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import ChatBotSearch from '../components/ChatBotSearch.vue'
 
 const router = useRouter()
 const selectedFestivals = ref([])
+
+// 오늘의 인기글: 게시판(BoardView)과 동일한 선정 기준 및 저장소를 사용
+const POSTS_STORAGE_KEY = 'community-posts'
+
+let communityPosts = []
+try {
+  const raw = JSON.parse(localStorage.getItem(POSTS_STORAGE_KEY) || 'null')
+  communityPosts = Array.isArray(raw) ? raw : []
+} catch (e) {
+  console.error('게시글 저장소 파싱 실패:', e)
+  communityPosts = []
+}
+
+function isPopularPost(post) {
+  const likes = Number(post.likes ?? 0)
+  return post.category === 'popular' || likes >= 10
+}
+
+const todayPopularPosts = computed(() => {
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+
+  return communityPosts
+    .filter((post) => {
+      const createdAt = post.createdAt ? new Date(post.createdAt) : null
+      if (!createdAt || Number.isNaN(createdAt.getTime())) return false
+
+      const createdDate = new Date(
+        createdAt.getFullYear(),
+        createdAt.getMonth(),
+        createdAt.getDate()
+      )
+
+      return createdDate.getTime() === today.getTime() && isPopularPost(post)
+    })
+    .sort((a, b) => {
+      const likeDiff = Number(b.likes ?? 0) - Number(a.likes ?? 0)
+      if (likeDiff !== 0) return likeDiff
+      return new Date(a.createdAt) - new Date(b.createdAt)
+    })
+    .slice(0, 8)
+})
+
+const todayPopularIndex = ref(0)
+const currentPopularPost = computed(() => todayPopularPosts.value[todayPopularIndex.value] || null)
+
+let popularRotationTimer = null
+
+function advanceTodayPopular() {
+  if (todayPopularPosts.value.length <= 1) return
+  todayPopularIndex.value = (todayPopularIndex.value + 1) % todayPopularPosts.value.length
+}
+
+function goToPopularPost(id) {
+  router.push({ path: '/board', hash: `#/post/${id}` })
+}
 
 // 실제 활용하실 JSON 데이터 형태 매핑
 const festivalData = {
@@ -182,6 +250,17 @@ onMounted(() => {
     selectedFestivals.value = shuffled.slice(0, 2)
   } else {
     selectedFestivals.value = items || []
+  }
+
+  if (todayPopularPosts.value.length > 1) {
+    popularRotationTimer = window.setInterval(advanceTodayPopular, 5000)
+  }
+})
+
+onBeforeUnmount(() => {
+  if (popularRotationTimer) {
+    window.clearInterval(popularRotationTimer)
+    popularRotationTimer = null
   }
 })
 
@@ -374,6 +453,19 @@ const goToPage = (path) => {
   font-size: 1rem;
   color: #475569;
   font-weight: 600;
+}
+
+.placeholder-text.popular-post-clickable {
+  cursor: pointer;
+}
+
+.placeholder-text.popular-post-clickable:hover {
+  color: #1a73e8;
+}
+
+.placeholder-text.empty {
+  color: #94a3b8;
+  font-weight: 500;
 }
 
 /* 부모 플렉스 상자 내부에서 왼쪽으로 5% 마진을 당겨 좌측 이동 보정 */
